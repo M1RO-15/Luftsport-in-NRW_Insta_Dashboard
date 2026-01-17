@@ -45,7 +45,7 @@ try:
     df = load_data_from_sheets()
     latest_date = df['DATE'].max()
 
-    st.title("⚽ Futsal Instagram Dashboard")
+    st.title("Mister Futsal - Instagram Dashboard")
 
     # --- DATEN-VORBEREITUNG ---
     # 1. Ranking
@@ -142,4 +142,5 @@ try:
 except Exception as e:
 
     st.error(f"Fehler im Dashboard: {e}")
+
 
