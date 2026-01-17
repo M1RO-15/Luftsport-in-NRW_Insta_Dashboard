@@ -13,10 +13,18 @@ SHEET_ID = "1_Ni1ALTrq3qkgXxgBaG2TNjRBodCEaYewhhTPq0aWfU"
 
 st.set_page_config(page_title="Futsal Insta-Analytics", layout="wide")
 
+# @st.cache_data(ttl=3600)
+# def load_data_from_sheets():
+#     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+#     creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+
 @st.cache_data(ttl=3600)
 def load_data_from_sheets():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    
+    client = gspread.authorize(creds)
     client = gspread.authorize(creds)
     sheet = client.open_by_key(SHEET_ID).sheet1
     
@@ -134,4 +142,5 @@ try:
         st.info("💡 Klicke oben links in der Ranking-Tabelle auf eine Zeile, um den Verlauf hier anzuzeigen.")
 
 except Exception as e:
+
     st.error(f"Fehler im Dashboard: {e}")
