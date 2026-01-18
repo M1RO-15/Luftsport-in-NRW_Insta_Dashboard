@@ -44,9 +44,8 @@ try:
     df_latest['STAND'] = pd.to_datetime(df_latest['DATE']).dt.strftime('%d.%m.%Y')
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False).copy()
     
-    # NEU: Spalte für die Auswahl ganz links einfügen
-    df_latest.insert(0, 'AUSWAHL', '🔘') 
-    df_latest.insert(1, 'RANG', range(1, len(df_latest) + 1))
+    # Wir löschen die extra "AUSWAHL"-Spalte und nutzen nur den Rang
+    df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
 
     # 2. Trend vorbereiten
     latest_date_global = df['DATE'].max()
@@ -69,13 +68,14 @@ try:
 
     with col_rank:
         st.subheader("🏆 Aktuelles Ranking")
-        st.caption("Klicke auf einen Verein für die Detailanalyse unten")
         
+        # HIER IST DIE ÄNDERUNG: 
+        # Wir geben der ersten Spalte (RANG) deinen langen Namen.
+        # Da die Kästchen direkt daneben stehen, sieht es aus wie eine Einheit.
         selection = st.dataframe(
-            df_latest[['AUSWAHL', 'RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
+            df_latest[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
             column_config={
-                "AUSWAHL": st.column_config.TextColumn("Auswahl für Detailanalyse", width="medium"),
-                "RANG": st.column_config.TextColumn("Rang", width="small"),
+                "RANG": st.column_config.TextColumn("Auswahl für Detailanalyse / Rang", width="medium"),
                 "CLUB_NAME": st.column_config.TextColumn("Verein"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
                 "FOLLOWER": st.column_config.TextColumn("Follower"),
@@ -108,7 +108,7 @@ try:
     st.divider()
 
     # --- UNTERER BEREICH ---
-    st.subheader("🔍 Detailanalyse für ausgewählten Club")
+    st.subheader("🔍  Detailanalyse für ausgewählten Club")
     
     selected_club = None
     if selection and selection.selection.rows:
@@ -131,7 +131,7 @@ try:
         
         st.plotly_chart(fig_abs, use_container_width=True)
     else:
-        st.info("💡 Klicke oben links in die Ranking-Tabelle, um Details zu sehen.")
+        st.info("💡 Klicke links auf ein Kästchen oder eine Zeile, um Details zu sehen.")
 
 except Exception as e:
     st.error(f"Fehler im Dashboard: {e}")
