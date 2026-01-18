@@ -2,9 +2,9 @@ name: Daily Instagram Scrape
 
 on:
   schedule:
-    # Führt den Scraper täglich um 04:00 UTC aus
+    # Führt den Scraper täglich um 15:00 UTC aus
     - cron: '0 15 * * *'
-  workflow_dispatch: # Erlaubt es dir, den Scraper jederzeit manuell zu starten
+  workflow_dispatch: # Dies ermöglicht den manuellen Start zum Testen!
 
 jobs:
   build:
