@@ -34,15 +34,15 @@ try:
     # --- Daten vorbereiten ---
     df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False)
-    # Rang-Spalte erstellen
     df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
     df_latest['STAND_STR'] = pd.to_datetime(df_latest['DATE']).dt.strftime('%d.%m.%Y')
 
-    # --- Die neue große Überschrift ---
+    # --- Die gelbe Überschrift ---
     akt_datum = df['DATE'].max().strftime('%d.%m.%Y')
     summe_follower = f"{int(df_latest['FOLLOWER'].sum()):,}".replace(",", ".")
     
-    st.markdown(f"#### Aktuelle Anzahl von Instagram-Followern von deutschen Futsal-Club-Seiten (Stand {akt_datum}): **{summe_follower}**")
+    # Hier benutzen wir :yellow[...], um die Zahl gelb zu machen
+    st.markdown(f"#### Aktuelle Anzahl von Instagram-Followern von deutschen Futsal-Club-Seiten (Stand {akt_datum}): :yellow[**{summe_follower}**]")
     st.divider()
 
     # Trend 4 Wochen
@@ -56,7 +56,7 @@ try:
     df_trend_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
     df_trend_top10.insert(0, 'RANG', range(1, len(df_trend_top10) + 1))
 
-    # --- Tabellen-Anzeige ---
+    # --- Tabellen ---
     col1, col2 = st.columns(2, gap="medium")
     h = 400
 
