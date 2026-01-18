@@ -39,14 +39,16 @@ try:
 
     # --- DATEN-VORBEREITUNG ---
     
-    # 1. Ranking: Letzter Stand pro Club
+    # 1. Ranking vorbereiten
     df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
     df_latest['STAND'] = pd.to_datetime(df_latest['DATE']).dt.strftime('%d.%m.%Y')
-    
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False).copy()
-    df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
+    
+    # NEU: Spalte für die Auswahl ganz links einfügen
+    df_latest.insert(0, 'AUSWAHL', '🔘') 
+    df_latest.insert(1, 'RANG', range(1, len(df_latest) + 1))
 
-    # 2. Trend (4 Wochen Vergleich)
+    # 2. Trend vorbereiten
     latest_date_global = df['DATE'].max()
     target_date_4w = latest_date_global - timedelta(weeks=4)
     available_dates = sorted(df['DATE'].unique())
@@ -65,17 +67,17 @@ try:
     col_rank, col_trend = st.columns(2, gap="medium")
     fixed_height_10_rows = 35 * 10 + 38 
 
-    # Tabellen-Design: Wir nutzen TextColumn für Linksbündigkeit
     with col_rank:
         st.subheader("🏆 Aktuelles Ranking")
-        st.caption("Alle Spalten sind linksbündig ausgerichtet")
+        st.caption("Klicke auf einen Verein für die Detailanalyse unten")
         
         selection = st.dataframe(
-            df_latest[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
+            df_latest[['AUSWAHL', 'RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
             column_config={
+                "AUSWAHL": st.column_config.TextColumn("Auswahl für Detailanalyse", width="medium"),
                 "RANG": st.column_config.TextColumn("Rang", width="small"),
                 "CLUB_NAME": st.column_config.TextColumn("Verein"),
-                "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/(.*?)/"),
+                "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
                 "FOLLOWER": st.column_config.TextColumn("Follower"),
                 "STAND": st.column_config.TextColumn("Stand")
             },
@@ -95,7 +97,7 @@ try:
             column_config={
                 "RANG": st.column_config.TextColumn("Rang", width="small"),
                 "CLUB_NAME": st.column_config.TextColumn("Verein"),
-                "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/(.*?)/"),
+                "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
                 "Zuwachs": st.column_config.TextColumn("Zuwachs")
             },
             use_container_width=True,
@@ -105,8 +107,8 @@ try:
 
     st.divider()
 
-    # --- UNTERER BEREICH: INDIVIDUALANALYSE ---
-    st.subheader("🔍 Detailansicht täglich für ausgewählten Club")
+    # --- UNTERER BEREICH ---
+    st.subheader("🔍 Detailanalyse für ausgewählten Club")
     
     selected_club = None
     if selection and selection.selection.rows:
@@ -133,6 +135,3 @@ try:
 
 except Exception as e:
     st.error(f"Fehler im Dashboard: {e}")
-
-
-
