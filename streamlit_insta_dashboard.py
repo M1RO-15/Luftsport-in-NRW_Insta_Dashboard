@@ -75,7 +75,7 @@ try:
         selection = st.dataframe(
             df_latest[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
             column_config={
-                "RANG": st.column_config.TextColumn("Auswahl für Detailanalyse / Rang", width="medium"),
+                "RANG": st.column_config.TextColumn("Rang", width="medium"),
                 "CLUB_NAME": st.column_config.TextColumn("Verein"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
                 "FOLLOWER": st.column_config.TextColumn("Follower"),
@@ -135,3 +135,4 @@ try:
 
 except Exception as e:
     st.error(f"Fehler im Dashboard: {e}")
+
