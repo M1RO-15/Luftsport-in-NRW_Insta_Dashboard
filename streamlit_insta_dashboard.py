@@ -38,14 +38,13 @@ try:
     st.title("Mister Futsal - Instagram Dashboard")
 
     # --- DATEN-VORBEREITUNG ---
-    
-    # Ranking vorbereiten und Index auf 1, 2, 3... setzen (für den Rang)
     df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
     df_latest['STAND'] = pd.to_datetime(df_latest['DATE']).dt.strftime('%d.%m.%Y')
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False).copy()
-    df_latest.index = range(1, len(df_latest) + 1) # Hier fängt der Rang bei 1 an
+    # Der Index wird unser "Rang"
+    df_latest.index = range(1, len(df_latest) + 1)
 
-    # Trend vorbereiten (4 Wochen)
+    # Trend 4 Wochen
     latest_date_global = df['DATE'].max()
     target_date_4w = latest_date_global - timedelta(weeks=4)
     available_dates = sorted(df['DATE'].unique())
@@ -67,8 +66,9 @@ try:
     with col_rank:
         st.subheader("🏆 Aktuelles Ranking")
         
-        # WICHTIG: hide_index=False zeigt den "Rang" an
-        # "_index" in column_config gibt ihm den Namen
+        # HIER IST DER TRICK: Eine Beschriftung direkt über der Spalte
+        st.markdown("**( <-- Auswahl für Detailanalyse )**")
+        
         selection = st.dataframe(
             df_latest[['CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
             column_config={
@@ -104,32 +104,28 @@ try:
 
     st.divider()
 
-    # --- UNTERER BEREICH (DETAILS) ---
-    st.subheader("🔍  Detailanalyse für ausgewählten Club")
+    # --- UNTERER BEREICH ---
+    st.subheader("🔍 Detailanalyse")
     
     selected_club = None
     if selection and selection.selection.rows:
-        # Wir holen uns den Namen des Clubs aus der angeklickten Zeile
         selected_row_idx = selection.selection.rows[0]
         selected_club = df_latest.iloc[selected_row_idx]['CLUB_NAME']
     
     if selected_club:
-        st.success(f"Du hast **{selected_club}** ausgewählt!")
+        st.success(f"Ergebnisse für: **{selected_club}**")
         club_data = df[df['CLUB_NAME'] == selected_club].sort_values(by='DATE')
 
         fig_abs = px.line(
             club_data, x='DATE', y='FOLLOWER', 
-            title=f"Wie viele Follower hat {selected_club}?",
+            title=f"Follower-Verlauf",
             markers=True,
             color_discrete_sequence=['#00CC96']
         )
-        fig_abs.update_xaxes(title_text=None, tickformat="%d.%m.%Y")
-        fig_abs.update_yaxes(title_text="Anzahl Follower")
         fig_abs.update_layout(hovermode="x unified")
-        
         st.plotly_chart(fig_abs, use_container_width=True)
     else:
-        st.info("💡 Klicke links auf eine Zeile, um die Kurve für einen Verein zu sehen.")
+        st.info("💡 Klicke links auf ein Kästchen, um den Verlauf zu sehen.")
 
 except Exception as e:
-    st.error(f"Oh weh, da ist ein Fehler: {e}")
+    st.error(f"Fehler: {e}")
