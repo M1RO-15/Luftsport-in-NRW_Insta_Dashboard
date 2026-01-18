@@ -2,9 +2,8 @@ name: Daily Instagram Scrape
 
 on:
   schedule:
-    # Führt den Scraper täglich um 15:00 UTC aus
     - cron: '0 15 * * *'
-  workflow_dispatch: # Dies ermöglicht den manuellen Start zum Testen!
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,4 +24,5 @@ jobs:
       - name: Run Scraper
         env:
           GOOGLE_SHEETS_CREDS: ${{ secrets.GOOGLE_SHEETS_CREDS }}
+          INSTAGRAM_SESSION_ID: ${{ secrets.INSTAGRAM_SESSION_ID }} # DIESE ZEILE HAT GEFEHLT!
         run: python Insta_account_scraper.py
