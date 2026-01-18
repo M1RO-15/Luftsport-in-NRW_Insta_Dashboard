@@ -39,15 +39,13 @@ try:
 
     # --- DATEN-VORBEREITUNG ---
     
-    # 1. Ranking vorbereiten
+    # Ranking vorbereiten und Index auf 1, 2, 3... setzen (für den Rang)
     df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
     df_latest['STAND'] = pd.to_datetime(df_latest['DATE']).dt.strftime('%d.%m.%Y')
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False).copy()
-    
-    # Wir löschen die extra "AUSWAHL"-Spalte und nutzen nur den Rang
-    df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
+    df_latest.index = range(1, len(df_latest) + 1) # Hier fängt der Rang bei 1 an
 
-    # 2. Trend vorbereiten
+    # Trend vorbereiten (4 Wochen)
     latest_date_global = df['DATE'].max()
     target_date_4w = latest_date_global - timedelta(weeks=4)
     available_dates = sorted(df['DATE'].unique())
@@ -60,7 +58,7 @@ try:
     df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
     
     df_trend_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
-    df_trend_top10.insert(0, 'RANG', range(1, len(df_trend_top10) + 1))
+    df_trend_top10.index = range(1, len(df_trend_top10) + 1)
 
     # --- OBERER BEREICH ---
     col_rank, col_trend = st.columns(2, gap="medium")
@@ -69,23 +67,22 @@ try:
     with col_rank:
         st.subheader("🏆 Aktuelles Ranking")
         
-        # HIER IST DIE ÄNDERUNG: 
-        # Wir geben der ersten Spalte (RANG) deinen langen Namen.
-        # Da die Kästchen direkt daneben stehen, sieht es aus wie eine Einheit.
+        # WICHTIG: hide_index=False zeigt den "Rang" an
+        # "_index" in column_config gibt ihm den Namen
         selection = st.dataframe(
-            df_latest[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
+            df_latest[['CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']],
             column_config={
-                "RANG": st.column_config.TextColumn("Rang", width="medium"),
+                "_index": st.column_config.NumberColumn("Rang", width="small"),
                 "CLUB_NAME": st.column_config.TextColumn("Verein"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
-                "FOLLOWER": st.column_config.TextColumn("Follower"),
+                "FOLLOWER": st.column_config.NumberColumn("Follower", format="%d"),
                 "STAND": st.column_config.TextColumn("Stand")
             },
             use_container_width=True,
             on_select="rerun",
             selection_mode="single-row",
             height=fixed_height_10_rows, 
-            hide_index=True
+            hide_index=False
         )
 
     with col_trend:
@@ -93,35 +90,36 @@ try:
         st.caption(f"Vergleich mit {closest_old_date.strftime('%d.%m.%Y')}")
         
         st.dataframe(
-            df_trend_top10[['RANG', 'CLUB_NAME', 'URL', 'Zuwachs']],
+            df_trend_top10[['CLUB_NAME', 'URL', 'Zuwachs']],
             column_config={
-                "RANG": st.column_config.TextColumn("Rang", width="small"),
+                "_index": st.column_config.NumberColumn("Rang", width="small"),
                 "CLUB_NAME": st.column_config.TextColumn("Verein"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
-                "Zuwachs": st.column_config.TextColumn("Zuwachs")
+                "Zuwachs": st.column_config.NumberColumn("Zuwachs", format="+%d")
             },
             use_container_width=True,
             height=fixed_height_10_rows,
-            hide_index=True
+            hide_index=False
         )
 
     st.divider()
 
-    # --- UNTERER BEREICH ---
+    # --- UNTERER BEREICH (DETAILS) ---
     st.subheader("🔍  Detailanalyse für ausgewählten Club")
     
     selected_club = None
     if selection and selection.selection.rows:
-        selected_index = selection.selection.rows[0]
-        selected_club = df_latest.iloc[selected_index]['CLUB_NAME']
+        # Wir holen uns den Namen des Clubs aus der angeklickten Zeile
+        selected_row_idx = selection.selection.rows[0]
+        selected_club = df_latest.iloc[selected_row_idx]['CLUB_NAME']
     
     if selected_club:
-        st.info(f"Analysiere Verlauf von: **{selected_club}**")
+        st.success(f"Du hast **{selected_club}** ausgewählt!")
         club_data = df[df['CLUB_NAME'] == selected_club].sort_values(by='DATE')
 
         fig_abs = px.line(
             club_data, x='DATE', y='FOLLOWER', 
-            title=f"Follower-Gesamtverlauf",
+            title=f"Wie viele Follower hat {selected_club}?",
             markers=True,
             color_discrete_sequence=['#00CC96']
         )
@@ -131,8 +129,7 @@ try:
         
         st.plotly_chart(fig_abs, use_container_width=True)
     else:
-        st.info("💡 Klicke links auf ein Kästchen oder eine Zeile, um Details zu sehen.")
+        st.info("💡 Klicke links auf eine Zeile, um die Kurve für einen Verein zu sehen.")
 
 except Exception as e:
-    st.error(f"Fehler im Dashboard: {e}")
-
+    st.error(f"Oh weh, da ist ein Fehler: {e}")
