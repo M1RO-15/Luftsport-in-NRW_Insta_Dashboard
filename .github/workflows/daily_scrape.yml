@@ -1,1 +1,28 @@
+name: Daily Instagram Scrape
 
+on:
+  schedule:
+    # Läuft täglich um 15:00 Uhr UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch: # Erlaubt manuellen Start
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install instaloader pandas gspread oauth2client
+
+      - name: Run Scraper
+        env:
+          GOOGLE_SHEETS_CREDS: ${{ secrets.GOOGLE_SHEETS_CREDS }}
+        run: python Insta_account_scraper.py
