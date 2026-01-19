@@ -102,17 +102,21 @@ try:
         df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
         df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
 
-        # TOP 10 Grafik
+        # TOP 10 Grafik mit Werten
         df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10)
         fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
-                         title="🚀 Top 10 Gewinner seit 15.01.2026", color_discrete_sequence=['#00CC96'])
+                         title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'],
+                         text='Zuwachs') # Fügt die Zahlen hinzu
+        fig_top.update_traces(textposition='outside')
         fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_top, use_container_width=True)
 
-        # BOTTOM 10 Grafik
+        # BOTTOM 10 Grafik mit Werten
         df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10)
         fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
-                            title="📉 Verlierer seit 15.01.2026", color_discrete_sequence=['#FF4B4B'])
+                            title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'],
+                            text='Zuwachs') # Fügt die Zahlen hinzu
+        fig_bottom.update_traces(textposition='outside')
         fig_bottom.update_layout(yaxis={'categoryorder':'total descending'})
         st.plotly_chart(fig_bottom, use_container_width=True)
 
@@ -124,4 +128,3 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
-
