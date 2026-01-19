@@ -42,7 +42,7 @@ try:
     st.markdown(f"#### Aktuelle Follower (Stand {akt_datum}): :yellow[**{summe_follower}**]")
     st.divider()
 
-    # --- OBERE REIHE: Ranking & Detailanalyse ---
+    # --- OBERE REIHE ---
     row1_col1, row1_col2 = st.columns(2, gap="medium")
     h_tables = 400
 
@@ -51,10 +51,10 @@ try:
         selection = st.dataframe(
             df_latest[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER']],
             column_config={
-                "RANG": st.column_config.NumberColumn("Rang", width="small", alignment="left"),
-                "CLUB_NAME": st.column_config.Column("Verein", alignment="left"),
-                "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)", alignment="left"),
-                "FOLLOWER": st.column_config.NumberColumn("Follower", format="%d", alignment="left")
+                "RANG": st.column_config.NumberColumn("Rang", width="small"),
+                "CLUB_NAME": "Verein",
+                "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
+                "FOLLOWER": st.column_config.NumberColumn("Follower", format="%d")
             },
             hide_index=True,
             on_select="rerun",
@@ -76,12 +76,11 @@ try:
 
     st.divider()
 
-    # --- UNTERE REIHE: Trends ---
+    # --- UNTERE REIHE ---
     row2_col1, row2_col2 = st.columns(2, gap="medium")
 
     with row2_col1:
         st.subheader("📈 Veränderung (4 Wochen)")
-        
         latest_date_global = df['DATE'].max()
         target_date_4w = latest_date_global - timedelta(weeks=4)
         available_dates = sorted(df['DATE'].unique())
@@ -97,9 +96,8 @@ try:
         st.dataframe(
             df_trend_all[['RANG', 'CLUB_NAME', 'Zuwachs']],
             column_config={
-                "RANG": st.column_config.NumberColumn("Rang", width="small", alignment="left"),
-                "CLUB_NAME": st.column_config.Column("Verein", alignment="left"),
-                "Zuwachs": st.column_config.NumberColumn("Zuwachs", format="%+d", alignment="left")
+                "RANG": st.column_config.NumberColumn("Rang", width="small"),
+                "Zuwachs": st.column_config.NumberColumn("Zuwachs", format="%+d")
             },
             hide_index=True,
             use_container_width=True,
