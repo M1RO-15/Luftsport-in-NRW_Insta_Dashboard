@@ -61,7 +61,7 @@ try:
     with row1_col1:
         st.subheader("🏆 Aktuelles Ranking")
         selection = st.dataframe(
-            df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND_STR']],
+            df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER']],
             column_config={
                 "RANG": st.column_config.TextColumn("Rang"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
@@ -128,6 +128,7 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
+
 
 
 
