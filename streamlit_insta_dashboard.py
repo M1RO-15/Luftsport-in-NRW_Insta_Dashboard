@@ -99,19 +99,19 @@ try:
         df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
         df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
 
-        # TOP 10
+        # TOP 10 - Jetzt mit geraden Zahlen (textangle=0)
         df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10)
         fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
                          title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'], text='Zuwachs')
-        fig_top.update_traces(textposition='inside', insidetextanchor='start')
+        fig_top.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
         fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_top, use_container_width=True, config={'staticPlot': True})
 
-        # BOTTOM 10
+        # BOTTOM 10 - Jetzt mit geraden Zahlen (textangle=0)
         df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10)
         fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
                             title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
-        fig_bottom.update_traces(textposition='inside', insidetextanchor='start')
+        fig_bottom.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
         fig_bottom.update_layout(yaxis={'categoryorder':'total descending'})
         st.plotly_chart(fig_bottom, use_container_width=True, config={'staticPlot': True})
 
