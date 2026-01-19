@@ -37,24 +37,29 @@ try:
     df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
     df_latest['STAND_STR'] = pd.to_datetime(df_latest['DATE']).dt.strftime('%d.%m.%Y')
 
+    # ZAHLEN ZU TEXT FÜR LINKSBÜNDIGKEIT
+    df_latest_display = df_latest.copy()
+    df_latest_display['RANG'] = df_latest_display['RANG'].astype(str)
+    df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
+
     akt_datum = df['DATE'].max().strftime('%d.%m.%Y')
     summe_follower = f"{int(df_latest['FOLLOWER'].sum()):,}".replace(",", ".")
     
     st.markdown(f"#### Aktuelle Follower aller Futsal-Clubs (Stand {akt_datum}): :yellow[**{summe_follower}**]")
     st.divider()
 
-    # --- OBERE REIHE: Ranking & Detailanalyse ---
+    # --- OBERE REIHE ---
     row1_col1, row1_col2 = st.columns(2, gap="medium")
     h_tables = 400
 
     with row1_col1:
         st.subheader("🏆 Aktuelles Ranking")
         selection = st.dataframe(
-            df_latest[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND_STR']],
+            df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND_STR']],
             column_config={
-                "RANG": st.column_config.NumberColumn("Rang", width="small"),
+                "RANG": st.column_config.TextColumn("Rang"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
-                "FOLLOWER": st.column_config.NumberColumn("Follower", format="%d")
+                "FOLLOWER": st.column_config.TextColumn("Follower")
             },
             hide_index=True,
             on_select="rerun",
@@ -76,13 +81,11 @@ try:
 
     st.divider()
 
-    # --- UNTERE REIHE: Trends & Gesamtverlauf ---
+    # --- UNTERE REIHE ---
     row2_col1, row2_col2 = st.columns(2, gap="medium")
 
     with row2_col1:
         st.subheader("📈 Veränderung seit dem 15.01.2026")
-        
-        # Trend-Berechnung
         latest_date_global = df['DATE'].max()
         target_date_4w = latest_date_global - timedelta(weeks=4)
         available_dates = sorted(df['DATE'].unique())
@@ -90,21 +93,24 @@ try:
         
         df_then = df[df['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
         df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
-        df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
+        df_trend['Zuwachs_Zahl'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
         
-        # Sortiert von Max nach Min und zeigt ALLE Clubs
-        df_trend_all = df_trend.sort_values(by='Zuwachs', ascending=False).copy()
-        df_trend_all.insert(0, 'RANG', range(1, len(df_trend_all) + 1))
+        df_trend = df_trend.sort_values(by='Zuwachs_Zahl', ascending=False)
+        df_trend.insert(0, 'RANG', range(1, len(df_trend) + 1))
+        
+        # ZAHLEN ZU TEXT FÜR LINKSBÜNDIGKEIT
+        df_trend['RANG'] = df_trend['RANG'].astype(str)
+        df_trend['Zuwachs'] = df_trend['Zuwachs_Zahl'].apply(lambda x: f"+{int(x)}" if x > 0 else str(int(x)))
 
         st.dataframe(
-            df_trend_all[['RANG', 'CLUB_NAME', 'Zuwachs']],
+            df_trend[['RANG', 'CLUB_NAME', 'Zuwachs']],
             column_config={
-                "RANG": st.column_config.NumberColumn("Rang", width="small"),
-                "Zuwachs": st.column_config.NumberColumn("Zuwachs", format="+%d")
+                "RANG": st.column_config.TextColumn("Rang"),
+                "Zuwachs": st.column_config.TextColumn("Zuwachs")
             },
             hide_index=True,
             use_container_width=True,
-            height=h_tables # Macht die Liste scrollbar
+            height=h_tables
         )
 
     with row2_col2:
@@ -115,6 +121,3 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
-
-
-
