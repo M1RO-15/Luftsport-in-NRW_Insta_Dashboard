@@ -2,7 +2,7 @@ name: Daily Instagram Scrape
 
 on:
   schedule:
-    - cron: '0 15 * * *'
+    - cron: '7 15 * * *'
   workflow_dispatch:
 
 jobs:
