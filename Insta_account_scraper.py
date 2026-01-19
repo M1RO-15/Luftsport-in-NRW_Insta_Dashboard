@@ -72,7 +72,9 @@ insta_urls = [
     "https://www.instagram.com/futsal_dragons_augsburg/",
     "https://www.instagram.com/dfb.futsal/",
     "https://www.instagram.com/dfb.u19.futsal.westfalen/",
-    "https://www.instagram.com/mister.futsal/"
+    "https://www.instagram.com/mister.futsal/",
+    "https://www.instagram.com/futsalthueringen/",
+    "https://www.instagram.com/team.dfbfutsal.schiedsrichter/"
 ]
 
 def get_google_sheet():
@@ -172,4 +174,5 @@ except Exception as e:
     print(f"❌ KRITISCHER FEHLER: {e}")
 
 print("FERTIG!")
+
 
