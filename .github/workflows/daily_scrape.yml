@@ -25,4 +25,4 @@ jobs:
         env:
           GOOGLE_SHEETS_CREDS: ${{ secrets.GOOGLE_SHEETS_CREDS }}
           INSTAGRAM_SESSION_ID: ${{ secrets.INSTAGRAM_SESSION_ID }} # DIESE ZEILE HAT GEFEHLT!
-        run: python Insta_account_scraper.py
+        run: python -u Insta_account_scraper.py
