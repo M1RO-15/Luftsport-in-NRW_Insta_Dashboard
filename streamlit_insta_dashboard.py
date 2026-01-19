@@ -108,12 +108,13 @@ try:
         )
 
     with row2_col2:
-        st.subheader("🌐 Gesamtentwicklung")
+        st.subheader("🌐 Gesamtentwicklung Deutschland")
         df_total_history = df.groupby('DATE')['FOLLOWER'].sum().reset_index()
         fig_total = px.line(df_total_history, x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200'])
         st.plotly_chart(fig_total, use_container_width=True)
 
 except Exception as e:
     st.error(f"Fehler: {e}")
+
 
 
