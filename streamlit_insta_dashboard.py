@@ -29,9 +29,8 @@ def load_data_from_sheets():
 
 try:
     df = load_data_from_sheets()
-    st.title("Mister Futsal - Instagram Dashboard")
 
-    # --- Daten vorbereiten ---
+    # --- DATEN VORBEREITEN ---
     df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False)
     df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
@@ -44,11 +43,22 @@ try:
 
     akt_datum = df['DATE'].max().strftime('%d.%m.%Y')
     summe_follower = f"{int(df_latest['FOLLOWER'].sum()):,}".replace(",", ".")
+
+    # --- KOPFZEILE MIT LOGO ---
+    # Wir erstellen zwei Spalten: Eine kleine fürs Logo, eine große für den Text
+    col_logo, col_titel = st.columns([1, 5])
     
-    st.markdown(f"#### Aktuelle Follower aller Futsal-Clubs (Stand {akt_datum}): :yellow[**{summe_follower}**]")
+    with col_logo:
+        # Hier wird dein Logo geladen
+        st.image("logo_instagram_dashboard.png", width=120)
+        
+    with col_titel:
+        st.title("Mister Futsal - Instagram Dashboard")
+        st.markdown(f"#### Aktuelle Follower aller Futsal-Clubs (Stand {akt_datum}): :yellow[**{summe_follower}**]")
+
     st.divider()
 
-    # --- OBERE REIHE ---
+    # --- OBERE REIHE: Ranking & Detailanalyse ---
     row1_col1, row1_col2 = st.columns(2, gap="medium")
     h_tables = 400
 
@@ -81,11 +91,11 @@ try:
 
     st.divider()
 
-    # --- UNTERE REIHE ---
+    # --- UNTERE REIHE: Trends & Gesamtverlauf ---
     row2_col1, row2_col2 = st.columns(2, gap="medium")
 
     with row2_col1:
-        st.subheader("📈 Veränderung seit dem 15.01.2026")
+        st.subheader(f"📈 Veränderung seit dem 15.01.2026")
         latest_date_global = df['DATE'].max()
         target_date_4w = latest_date_global - timedelta(weeks=4)
         available_dates = sorted(df['DATE'].unique())
