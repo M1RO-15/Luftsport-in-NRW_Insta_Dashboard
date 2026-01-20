@@ -57,7 +57,7 @@ try:
 
     # --- OBERE REIHE ---
     row1_col1, row1_col2 = st.columns(2, gap="medium")
-    h_tables = 800
+    h_tables = 1200
 
     with row1_col1:
         st.subheader("🏆 Aktuelles Ranking")
@@ -72,7 +72,7 @@ try:
             on_select="rerun",
             selection_mode="single-row",
             use_container_width=True,
-            # height=h_tables
+            height=h_tables
         )
 
     with row1_col2:
