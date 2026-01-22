@@ -71,7 +71,7 @@ try:
             },
             hide_index=True,
             on_select="rerun",
-            selection_mode="single-row",
+            selection_mode="multi-row",
             use_container_width=True,
             height=h_tables
         )
@@ -131,6 +131,7 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
+
 
 
 
