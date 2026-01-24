@@ -165,7 +165,7 @@ with tab_insta:
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
             #st.markdown('<div class="instruction-text">👇 Klicke in die Tabelle, um Vereine auszuwählen!</div>', unsafe_allow_html=True)
-            st.markdown('👇 Klicke in die Tabelle, um Vereine auszuwählen!')
+            st.markdown("**:yellow[👇 Wähle hier einen oder mehrere Vereine aus!]**")
             
             selection = st.dataframe(
                 df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
@@ -289,6 +289,7 @@ with tab_zuschauer:
                 st.warning("Keine Daten für dieses Team gefunden.")
         else:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
+
 
 
 
