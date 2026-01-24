@@ -117,6 +117,7 @@ try:
                          title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
         fig_top.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
         fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
+        fig_top.update_yaxes(title_text=None)
         st.plotly_chart(fig_top, use_container_width=True, config={'staticPlot': True})
 
         # NEU: Auch hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
@@ -127,6 +128,7 @@ try:
                             title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
         fig_bottom.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
         fig_bottom.update_layout(yaxis={'categoryorder':'total descending'})
+        fig_top.update_yaxes(title_text=None)
         st.plotly_chart(fig_bottom, use_container_width=True, config={'staticPlot': True})
 
     with row2_col2:
@@ -140,4 +142,5 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
+
 
