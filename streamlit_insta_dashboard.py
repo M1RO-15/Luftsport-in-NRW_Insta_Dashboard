@@ -138,7 +138,6 @@ try:
 except:
     st.title("Futsal Dashboard") 
 
-st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
 st.markdown(f"[www.misterfutsal.de](https://www.misterfutsal.de) | :grey[Stand {akt_datum}]")
 
 st.divider()
@@ -244,6 +243,7 @@ with tab_insta:
 
         with row2_col2:
             st.subheader("🌐 Gesamtentwicklung Deutschland")
+            st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
             df_total_history = df.groupby('DATE')['FOLLOWER'].sum().reset_index()
             fig_total = px.line(df_total_history, x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200'])
             fig_total.update_layout(separators=',.')
@@ -288,3 +288,4 @@ with tab_zuschauer:
                 st.warning("Keine Daten für dieses Team gefunden.")
         else:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
+
