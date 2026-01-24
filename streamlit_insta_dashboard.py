@@ -38,8 +38,6 @@ try:
     df_latest_display = df_latest.copy()
     df_latest_display['RANG'] = df_latest_display['RANG'].astype(str)
     df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
-    
-    # NEU: Spalte für das Datum des letzten Eintrags formatieren
     df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
 
     akt_datum = df['DATE'].max().strftime('%d.%m.%Y')
@@ -60,13 +58,12 @@ try:
         st.subheader("🏆 Aktuelles Ranking")
         st.markdown("**:yellow[👇 Wähle hier einen oder mehrere Vereine aus!]**")
         selection = st.dataframe(
-            # 'STAND' zur Auswahl der Spalten hinzugefügt
             df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
             column_config={
                 "RANG": st.column_config.TextColumn("Rang"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
                 "FOLLOWER": st.column_config.TextColumn("Follower"),
-                "STAND": st.column_config.TextColumn("Stand") # Konfiguration für die neue Spalte
+                "STAND": st.column_config.TextColumn("Stand")
             },
             hide_index=True,
             on_select="rerun",
@@ -107,19 +104,25 @@ try:
         latest_date_global = df['DATE'].max()
         target_date_4w = latest_date_global - timedelta(weeks=4)
         available_dates = sorted(df['DATE'].unique())
-        closest_old_date = min(available_dates, key=lambda x: abs(x - target_date_4w))
+        closest_old_date = min(available_dates, key=lambda x: x if x <= target_date_4w else available_dates[0])
         df_then = df[df['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
         df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
         df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
 
-        df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10)
+        # NEU: Hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
+        df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
+        df_top10['CLUB_NAME'] = df_top10['CLUB_NAME'].str[:15]
+        
         fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
                          title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
         fig_top.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
         fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_top, use_container_width=True, config={'staticPlot': True})
 
-        df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10)
+        # NEU: Auch hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
+        df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10).copy()
+        df_bottom10['CLUB_NAME'] = df_bottom10['CLUB_NAME'].str[:15]
+        
         fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
                             title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
         fig_bottom.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
