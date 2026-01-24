@@ -111,7 +111,7 @@ try:
 
         # NEU: Hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
         df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
-        df_top10['CLUB_NAME'] = df_top10['CLUB_NAME'].str[:15]
+        df_top10['CLUB_NAME'] = df_top10['CLUB_NAME'].str[:20]
         
         fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
                          title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
@@ -121,7 +121,7 @@ try:
 
         # NEU: Auch hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
         df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10).copy()
-        df_bottom10['CLUB_NAME'] = df_bottom10['CLUB_NAME'].str[:15]
+        df_bottom10['CLUB_NAME'] = df_bottom10['CLUB_NAME'].str[:20]
         
         fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
                             title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
@@ -140,3 +140,4 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
+
