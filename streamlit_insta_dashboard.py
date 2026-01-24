@@ -38,6 +38,9 @@ try:
     df_latest_display = df_latest.copy()
     df_latest_display['RANG'] = df_latest_display['RANG'].astype(str)
     df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
+    
+    # NEU: Spalte für das Datum des letzten Eintrags formatieren
+    df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
 
     akt_datum = df['DATE'].max().strftime('%d.%m.%Y')
     summe_follower = f"{int(df_latest['FOLLOWER'].sum()):,}".replace(",", ".")
@@ -57,15 +60,17 @@ try:
         st.subheader("🏆 Aktuelles Ranking")
         st.markdown("**:yellow[👇 Wähle hier einen oder mehrere Vereine aus!]**")
         selection = st.dataframe(
-            df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER']],
+            # 'STAND' zur Auswahl der Spalten hinzugefügt
+            df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
             column_config={
                 "RANG": st.column_config.TextColumn("Rang"),
                 "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
-                "FOLLOWER": st.column_config.TextColumn("Follower")
+                "FOLLOWER": st.column_config.TextColumn("Follower"),
+                "STAND": st.column_config.TextColumn("Stand") # Konfiguration für die neue Spalte
             },
             hide_index=True,
             on_select="rerun",
-            selection_mode="multi-row", # GEÄNDERT: Mehrere Zeilen erlaubt
+            selection_mode="multi-row",
             use_container_width=True,
             height=h_tables
         )
@@ -73,14 +78,11 @@ try:
     with row1_col2:
         st.subheader("🔍 Detailanalyse")
         if selection and selection.selection.rows:
-            # GEÄNDERT: Alle markierten Vereine verarbeiten
             sel_indices = selection.selection.rows
             sel_clubs = df_latest.iloc[sel_indices]['CLUB_NAME'].tolist()
             
-            # Daten filtern
             plot_data = df[df['CLUB_NAME'].isin(sel_clubs)].sort_values(['CLUB_NAME', 'DATE'])
             
-            # Diagramm mit mehreren Linien (color='CLUB_NAME')
             fig_detail = px.line(
                 plot_data, 
                 x='DATE', 
@@ -135,4 +137,3 @@ try:
 
 except Exception as e:
     st.error(f"Fehler: {e}")
-
