@@ -149,7 +149,7 @@ with tab_zuschauer:
         if 'AVERAGE_SPIELTAG' in df_z.columns:
             df_z['AVERAGE_SPIELTAG'] = pd.to_numeric(df_z['AVERAGE_SPIELTAG'], errors='coerce').fillna(0)
         
-        # Saison berechnen falls nötig (für Team-Ansicht)
+        # Saison berechnen falls nötig
         def get_season(d):
             if pd.isnull(d): return "Unbekannt"
             return f"{d.year}/{d.year + 1}" if d.month >= 7 else f"{d.year - 1}/{d.year}"
@@ -163,46 +163,53 @@ with tab_zuschauer:
         color_map = {s: ('#0047AB' if i % 2 == 0 else '#FFC000') for i, s in enumerate(unique_seasons)}
 
         if 'HEIM' in df_z.columns:
-            options_list = ["🇩🇪 Liga-Gesamtentwicklung (Spieltag-Schnitt)"] + sorted(df_z['HEIM'].unique())
+            options_list = ["🇩🇪 Liga-Gesamtentwicklung (Chronologisch)"] + sorted(df_z['HEIM'].unique())
             auswahl = st.selectbox("Wähle eine Analyse:", options_list)
 
-            # --- NEUER BEREICH: LIGA-GESAMTENTWICKLUNG ---
+            # --- ÜBERARBEITET: LIGA-GESAMTENTWICKLUNG ALS BALKENDIAGRAMM ---
             if "Liga-Gesamtentwicklung" in auswahl:
                 st.subheader("📈 Durchschnittliche Zuschauer pro Spieltag")
                 
-                # 1. Hilfs-Dataframe erstellen
-                # Wir nutzen SAISON (oder SEASON), SPIELTAG und AVERAGE_SPIELTAG
-                cols = ['SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']
+                # Hilfs-Dataframe für chronologische Anzeige
+                cols = ['DATUM', 'SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']
                 df_helper = df_z[[c for c in cols if c in df_z.columns]].copy()
                 
-                # 2. Deduplizieren auf Saison und Spieltag
-                df_helper = df_helper.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values(['SAISON', 'SPIELTAG'])
+                # Deduplizieren und nach Datum absteigend sortieren (neueste links)
+                df_helper = df_helper.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values('DATUM', ascending=False)
+
+                # Label für die X-Achse erstellen, das Saison und Spieltag kombiniert
+                df_helper['LABEL'] = df_helper.apply(
+                    lambda x: f"{x['SAISON']} - {str(x['SPIELTAG']).replace('.0', '')}", axis=1
+                )
 
                 if not df_helper.empty:
-                    # 3. Grafik erstellen (Liniendiagramm für Trends über Spieltage)
-                    fig_trend = px.line(
+                    # Balkendiagramm erstellen
+                    fig_trend = px.bar(
                         df_helper, 
-                        x='SPIELTAG', 
+                        x='LABEL', 
                         y='AVERAGE_SPIELTAG', 
                         color='SAISON',
-                        markers=True,
-                        title="Zuschauerschnitt im Saisonvergleich (nach Spieltag)",
-                        labels={'AVERAGE_SPIELTAG': 'Ø Zuschauer', 'SPIELTAG': 'Spieltag'},
-                        color_discrete_map=color_map
+                        title="Zuschauerschnitt im Saisonvergleich (Chronologisch)",
+                        labels={'AVERAGE_SPIELTAG': 'Ø Zuschauer', 'LABEL': 'Saison & Spieltag/Phase'},
+                        color_discrete_map=color_map,
+                        text='AVERAGE_SPIELTAG'
                     )
                     
                     fig_trend.update_layout(
-                        hovermode="x unified",
-                        xaxis=dict(dtick=1)
+                        xaxis_tickangle=-45,
+                        xaxis={'type': 'category'}, # Verhindert, dass Plotly das Datum als Zeitachse interpretiert
+                        hovermode="x",
+                        uniformtext_mode='hide'
                     )
+                    
+                    fig_trend.update_traces(textposition='outside')
                     
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
-                    # Rohdaten Expander
                     with st.expander("Datenquelle der Grafik anzeigen"):
-                        st.dataframe(df_helper, hide_index=True, use_container_width=True)
+                        st.dataframe(df_helper[['DATUM', 'SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']], hide_index=True, use_container_width=True)
                 else:
-                    st.warning("Die erforderlichen Spalten (SAISON, SPIELTAG, AVERAGE_SPIELTAG) fehlen im Datensatz.")
+                    st.warning("Die erforderlichen Spalten fehlen im Datensatz.")
 
             # --- TEAM-ANALYSE ---
             else:
@@ -221,5 +228,3 @@ with tab_zuschauer:
 
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
-
-
