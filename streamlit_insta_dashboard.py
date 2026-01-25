@@ -115,12 +115,14 @@ with tab_zuschauer:
         if 'ZUSCHAUER' in df_z.columns: df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
         if 'AVERAGE_SPIELTAG' in df_z.columns: df_z['AVERAGE_SPIELTAG'] = pd.to_numeric(df_z['AVERAGE_SPIELTAG'], errors='coerce').fillna(0)
         
+        # Erstelle SEASON Spalte (falls nicht im Sheet)
         def get_season(d):
             if pd.isnull(d): return "Unbekannt"
             return f"{d.year}/{d.year + 1}" if d.month >= 7 else f"{d.year - 1}/{d.year}"
-        df_z['SAISON'] = df_z['DATUM'].apply(get_season)
+        if 'SEASON' not in df_z.columns:
+            df_z['SEASON'] = df_z['DATUM'].apply(get_season)
 
-        unique_seasons = sorted([s for s in df_z['SAISON'].unique() if s != "Unbekannt"])
+        unique_seasons = sorted([s for s in df_z['SEASON'].unique() if s != "Unbekannt"])
         color_map = {s: ('#0047AB' if i % 2 == 0 else '#FFC000') for i, s in enumerate(unique_seasons)}
 
         if 'HEIM' in df_z.columns:
@@ -130,10 +132,10 @@ with tab_zuschauer:
             if "Liga-Gesamtentwicklung" in auswahl:
                 st.subheader("📈 Entwicklung der Zuschauerzahlen (Saisonschnitt)")
                 
-                # NEU: Nur einen Wert pro Saison & Spieltag für die Berechnung nutzen
-                df_unique_matchdays = df_z.drop_duplicates(subset=['SAISON', 'SPIELTAG'])
+                # --- WICHTIG: DEDUPLIZIERUNG FÜR GESAMTENTWICKLUNG ---
+                df_global = df_z.drop_duplicates(subset=['SEASON', 'SPIELTAG']).copy()
                 
-                stats_year = df_unique_matchdays.groupby('SAISON')['AVERAGE_SPIELTAG'].agg(['count', 'mean']).reset_index()
+                stats_year = df_global.groupby('SEASON')['AVERAGE_SPIELTAG'].agg(['count', 'mean']).reset_index()
                 stats_year.columns = ['Saison', 'Anzahl Spieltage', 'Ø Zuschauer']
                 stats_year['Ø Zuschauer'] = stats_year['Ø Zuschauer'].round(0).astype(int)
                 st.dataframe(stats_year, hide_index=True, use_container_width=True)
@@ -146,17 +148,16 @@ with tab_zuschauer:
                     st.divider()
                     st.subheader("🏟️ Details pro Spielphase (Alle Spieltage & Playoffs)")
                     
-                    # Nutzt die deduplizierten Daten für die Grafik
-                    df_phase_agg = df_unique_matchdays.copy().sort_values('DATUM')
+                    df_phase_agg = df_global.sort_values('DATUM').copy()
                     df_phase_agg['SPIELTAG_STR'] = df_phase_agg['SPIELTAG'].astype(str).str.replace(".0", "", regex=False)
-                    df_phase_agg['X_LABEL'] = df_phase_agg['SAISON'] + " - " + df_phase_agg['SPIELTAG_STR']
+                    df_phase_agg['X_LABEL'] = df_phase_agg['SEASON'] + " - " + df_phase_agg['SPIELTAG_STR']
                     
                     fig_phases = px.bar(
                         df_phase_agg, 
                         x='X_LABEL', 
                         y='AVERAGE_SPIELTAG', 
                         text='AVERAGE_SPIELTAG', 
-                        color='SAISON', 
+                        color='SEASON', 
                         color_discrete_map=color_map, 
                         title="Schnitt je Spielphase (chronologisch)"
                     )
@@ -177,13 +178,13 @@ with tab_zuschauer:
                 team_data = df_z[df_z['HEIM'] == auswahl].sort_values('DATUM')
                 st.subheader(f"Entwicklung: {auswahl}")
                 
-                stats_team = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
+                stats_team = team_data.groupby('SEASON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
                 stats_team.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
                 stats_team['Ø Zuschauer'] = stats_team['Ø Zuschauer'].round(0).astype(int)
                 st.dataframe(stats_team, hide_index=True, use_container_width=True)
 
                 team_data['X_LABEL'] = team_data.apply(lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} ({str(x['SPIELTAG']).replace('.0', '')})", axis=1)
-                fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', color='SAISON', color_discrete_map=color_map, title=f"Spiele von {auswahl}")
+                fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', color='SEASON', color_discrete_map=color_map, title=f"Spiele von {auswahl}")
                 fig_team.update_layout(yaxis_range=[0, team_data['ZUSCHAUER'].max() * 1.2])
                 st.plotly_chart(fig_team, use_container_width=True, config={'staticPlot': True})
 
