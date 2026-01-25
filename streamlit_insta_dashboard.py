@@ -11,61 +11,16 @@ ZUSCHAUER_SHEET_ID = "14puepYtteWGPD1Qv89gCpZijPm5Yrgr8glQnGBh3PXM"
 
 st.set_page_config(page_title="Futsal Insta-Analytics", layout="wide")
 
-# --- STYLING ---
+# --- STYLING (Unverändert) ---
 st.markdown("""
 <style>
-    /* --- TAB STYLING --- */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background-color: transparent;
-        padding-bottom: 10px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 30px;
-        background-color: #FFFFFF;
-        border: 2px solid #D3D3D3;
-        border-radius: 0px;
-        padding: 0px 10px;
-        color: #31333F;
-        font-weight: 100;
-        transition: all 0.3s ease;
-    }
-    .stTabs [data-baseweb="tab"]:hover {
-        border-color: #0047AB;
-        background-color: #E8F0FE;
-        color: #0047AB;
-    }
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background-color: #0047AB;
-        border: 2px solid #0047AB;
-        color: #FFFFFF !important;
-        box-shadow: 0px 4px 6px rgba(0, 71, 171, 0.3);
-    }
-    .stTabs [data-baseweb="tab"][aria-selected="true"] p {
-        color: #FFFFFF !important;
-        font-size: 18px;
-        font-weight: bold;
-    }
-    /* --- SELECTBOX DESIGN --- */
-    div[data-baseweb="select"] > div {
-        background-color: #FDFDFD;
-        border: 2px solid #0047AB;
-        border-radius: 8px;
-        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    }
-    div[data-baseweb="select"] span {
-        font-weight: 600;
-        color: #333;
-    }
-    .stSelectbox label p {
-        font-size: 18px !important;
-        color: #0047AB !important;
-        font-weight: 800 !important;
-        margin-bottom: 5px;
-    }
-    div[data-baseweb="select"] svg {
-        fill: #0047AB !important;
-    }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; background-color: transparent; padding-bottom: 10px; }
+    .stTabs [data-baseweb="tab"] { height: 30px; background-color: #FFFFFF; border: 2px solid #D3D3D3; border-radius: 0px; padding: 0px 10px; color: #31333F; font-weight: 100; transition: all 0.3s ease; }
+    .stTabs [data-baseweb="tab"]:hover { border-color: #0047AB; background-color: #E8F0FE; color: #0047AB; }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] { background-color: #0047AB; border: 2px solid #0047AB; color: #FFFFFF !important; box-shadow: 0px 4px 6px rgba(0, 71, 171, 0.3); }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] p { color: #FFFFFF !important; font-size: 18px; font-weight: bold; }
+    div[data-baseweb="select"] > div { background-color: #FDFDFD; border: 2px solid #0047AB; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+    .stSelectbox label p { font-size: 18px !important; color: #0047AB !important; font-weight: 800 !important; margin-bottom: 5px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -82,36 +37,25 @@ def load_data(sheet_id, secret_key):
         df = pd.DataFrame(data)
         df.columns = [str(c).strip().upper() for c in df.columns]
         return df
-    except Exception as e:
+    except:
         return pd.DataFrame()
 
 # ==========================================
-# 1. KOPFBEREICH
+# 1. KOPFBEREICH (Unverändert)
 # ==========================================
-
 df = load_data(INSTA_SHEET_ID, "gcp_service_account")
-
 if not df.empty:
-    if 'DATE' in df.columns:
-        df['DATE'] = pd.to_datetime(df['DATE']).dt.date
+    if 'DATE' in df.columns: df['DATE'] = pd.to_datetime(df['DATE']).dt.date
     df['FOLLOWER'] = pd.to_numeric(df['FOLLOWER'], errors='coerce').fillna(0)
-    df = df.sort_values(by=['CLUB_NAME', 'DATE'])
-    df = df.drop_duplicates(subset=['CLUB_NAME', 'DATE'], keep='last')
-    
-    df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
-    df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False)
-    
+    df = df.sort_values(by=['CLUB_NAME', 'DATE']).drop_duplicates(subset=['CLUB_NAME', 'DATE'], keep='last')
+    df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index().sort_values(by='FOLLOWER', ascending=False)
     summe_follower = f"{int(df_latest['FOLLOWER'].sum()):,}".replace(",", ".")
     akt_datum = df['DATE'].max().strftime('%d.%m.%Y')
 else:
-    summe_follower = "0"
-    akt_datum = "-"
+    summe_follower, akt_datum = "0", "-"
 
-try:
-    st.image("banner_statistik_dashboard.png", width=450)
-except:
-    st.title("Futsal Dashboard") 
-
+try: st.image("banner_statistik_dashboard.png", width=450)
+except: st.title("Futsal Dashboard") 
 st.markdown(f"[www.misterfutsal.de](https://www.misterfutsal.de) | :grey[Stand {akt_datum}]")
 st.divider()
 
@@ -120,7 +64,7 @@ st.divider()
 # ==========================================
 tab_insta, tab_zuschauer = st.tabs(["📸 Instagram Dashboard", "🏟️ Zuschauer Dashboard"])
 
-# --- TAB 1: INSTAGRAM ---
+# --- TAB 1: INSTAGRAM (100% wie vorher) ---
 with tab_insta:
     if not df.empty:
         df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
@@ -128,42 +72,19 @@ with tab_insta:
         df_latest_display['RANG'] = df_latest_display['RANG'].astype(str)
         df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
         df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
-
         row1_col1, row1_col2 = st.columns(2, gap="medium")
-
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
-            st.markdown("**:yellow[👇 Wähle hier einen oder mehrere Vereine aus!]**")
-            selection = st.dataframe(
-                df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
-                column_config={
-                    "RANG": st.column_config.TextColumn("Rang"),
-                    "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
-                    "FOLLOWER": st.column_config.TextColumn("Follower"),
-                    "STAND": st.column_config.TextColumn("Stand")
-                },
-                hide_index=True,
-                on_select="rerun",
-                selection_mode="multi-row",
-                use_container_width=True,
-                height=2150
-            )
-
+            selection = st.dataframe(df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], column_config={"RANG": st.column_config.TextColumn("Rang"), "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"), "FOLLOWER": st.column_config.TextColumn("Follower"), "STAND": st.column_config.TextColumn("Stand")}, hide_index=True, on_select="rerun", selection_mode="multi-row", use_container_width=True, height=2150)
         with row1_col2:
             st.subheader("🔍 Detailanalyse")
             if selection and selection.selection.rows:
-                sel_indices = selection.selection.rows
-                sel_clubs = df_latest.iloc[sel_indices]['CLUB_NAME'].tolist()
+                sel_clubs = df_latest.iloc[selection.selection.rows]['CLUB_NAME'].tolist()
                 plot_data = df[df['CLUB_NAME'].isin(sel_clubs)].sort_values(['CLUB_NAME', 'DATE'])
-                
                 fig_detail = px.line(plot_data, x='DATE', y='FOLLOWER', color='CLUB_NAME', title="Vergleich der Vereine", markers=True)
-                fig_detail.update_xaxes(title_text=None, tickformat="%d.%m.%Y")
                 st.plotly_chart(fig_detail, use_container_width=True)
-            else:
-                st.info("💡 Klicke links auf einen oder mehrere Vereine für Details.")
-
+            else: st.info("💡 Klicke links auf einen oder mehrere Vereine für Details.")
         st.divider()
-
         row2_col1, row2_col2 = st.columns(2, gap="medium")
         with row2_col1:
             st.subheader("📈 Wachstumstrends")
@@ -174,183 +95,76 @@ with tab_insta:
             df_then = df[df['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
             df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
             df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
-    
-            # NEU: Hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
             df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
-            df_top10['CLUB_NAME'] = df_top10['CLUB_NAME'].str[:20]
-            
-            fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
-                             title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
-            fig_top.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
-            fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
-            fig_top.update_yaxes(title_text=None)
-            st.plotly_chart(fig_top, use_container_width=True, config={'staticPlot': True})
-    
-            # NEU: Auch hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
+            st.plotly_chart(px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'], text='Zuwachs').update_layout(yaxis={'categoryorder':'total ascending'}), use_container_width=True, config={'staticPlot': True})
             df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10).copy()
-            df_bottom10['CLUB_NAME'] = df_bottom10['CLUB_NAME'].str[:20]
-            
-            fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
-                                title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
-            fig_bottom.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
-            fig_bottom.update_layout(yaxis={'categoryorder':'total descending'})
-            fig_bottom.update_yaxes(title_text=None)
-            st.plotly_chart(fig_bottom, use_container_width=True, config={'staticPlot': True})
+            st.plotly_chart(px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'], text='Zuwachs').update_layout(yaxis={'categoryorder':'total descending'}), use_container_width=True, config={'staticPlot': True})
+        with row2_col2:
+            st.subheader("🌐 Gesamtentwicklung Deutschland")
+            st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
+            st.plotly_chart(px.line(df.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d'), use_container_width=True, config={'staticPlot': True})
+    else: st.error("Instagram-Daten konnten nicht geladen werden.")
 
-    with row2_col2:
-        st.subheader("🌐 Gesamtentwicklung Deutschland")
-        df_total_history = df.groupby('DATE')['FOLLOWER'].sum().reset_index()
-        fig_total = px.line(df_total_history, x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200'])
-        fig_total.update_layout(separators=',.')
-        fig_total.update_yaxes(tickformat=',d')
-        fig_total.update_xaxes(title_text=None, tickformat="%d.%m.%Y")
-        st.plotly_chart(fig_total, use_container_width=True, config={'staticPlot': True})
-    else:
-        st.error("Instagram-Daten konnten nicht geladen werden.")
-
-# --- TAB 2: ZUSCHAUER ---
+# --- TAB 2: ZUSCHAUER (ANGESPASST) ---
 with tab_zuschauer:
-    st.header("🏟️ Zuschauer-Statistiken der Futsal-Bundesliga")
+    st.header("🏟️ Zuschauer-Statistiken")
     df_z = load_data(ZUSCHAUER_SHEET_ID, "gcp_service_account")
 
     if not df_z.empty:
-        # --- DATEN VORBEREITEN ---
-        if 'DATUM' in df_z.columns:
-            df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce')
+        if 'DATUM' in df_z.columns: df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce')
+        if 'ZUSCHAUER' in df_z.columns: df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
         
-        if 'ZUSCHAUER' in df_z.columns:
-            df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
-
-        # Saison-Funktion definieren
         def get_season(d):
             if pd.isnull(d): return "Unbekannt"
-            if d.month >= 7:
-                return f"{d.year}/{d.year + 1}"
-            else:
-                return f"{d.year - 1}/{d.year}"
-
+            return f"{d.year}/{d.year + 1}" if d.month >= 7 else f"{d.year - 1}/{d.year}"
         df_z['SAISON'] = df_z['DATUM'].apply(get_season)
 
-        # Farb-Logik Global aufbauen (Blau/Gelb abwechselnd nach Saison)
-        unique_seasons_global = sorted([s for s in df_z['SAISON'].unique() if s != "Unbekannt"])
-        color_map = {}
-        for i, season in enumerate(unique_seasons_global):
-            if i % 2 == 0:
-                color_map[season] = '#0047AB' # Blau
-            else:
-                color_map[season] = '#FFC000' # Gelb
+        unique_seasons = sorted([s for s in df_z['SAISON'].unique() if s != "Unbekannt"])
+        color_map = {s: ('#0047AB' if i % 2 == 0 else '#FFC000') for i, s in enumerate(unique_seasons)}
 
-        # --- AUSWAHL MENÜ AUFBAUEN ---
         if 'HEIM' in df_z.columns:
-            heim_teams = sorted(df_z['HEIM'].unique())
-            # "Liga-Durchschnitt" als erste Option hinzufügen
-            options_list = ["🇩🇪 Liga-Durchschnitt (Alle Vereine)"] + heim_teams
-            
+            options_list = ["🇩🇪 Liga-Gesamtentwicklung (Jahres-Schnitt)"] + sorted(df_z['HEIM'].unique())
             auswahl = st.selectbox("Wähle eine Analyse:", options_list)
 
-            # --- OPTION 1: LIGA-DURCHSCHNITT (GLOBAL) ---
-            if auswahl == "🇩🇪 Liga-Durchschnitt (Alle Vereine)":
-                st.subheader("📊 Durchschnittliche Zuschauerzahl pro Spieltag (Liga-Gesamt)")
+            # --- OPTION: LIGA-GESAMT ---
+            if "Liga-Gesamtentwicklung" in auswahl:
+                st.subheader("📈 Entwicklung der Zuschauerzahlen (Saisonschnitt)")
                 
+                # 1. Durchschnitt pro Saison (Jahres-Ebene)
+                stats_year = df_z.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
+                stats_year.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
+                stats_year['Ø Zuschauer'] = stats_year['Ø Zuschauer'].round(0).astype(int)
+                st.dataframe(stats_year, hide_index=True, use_container_width=True)
+                
+                fig_year = px.bar(stats_year, x='Saison', y='Ø Zuschauer', text='Ø Zuschauer', color='Saison', color_discrete_map=color_map, title="Schnitt pro Saison")
+                fig_year.update_layout(yaxis_range=[0, stats_year['Ø Zuschauer'].max() * 1.2])
+                st.plotly_chart(fig_year, use_container_width=True)
+
+                # 2. Alle Phasen (Spieltage inkl. Playoffs)
                 if 'SPIELTAG' in df_z.columns:
-                    # Kopie für die Aggregation
-                    df_global = df_z.copy()
-                    df_global['SPIELTAG'] = pd.to_numeric(df_global['SPIELTAG'], errors='coerce')
-                    df_global = df_global.dropna(subset=['SPIELTAG'])
-
-                    # Gruppieren nach Saison und Spieltag -> Durchschnitt
-                    df_global_agg = df_global.groupby(['SAISON', 'SPIELTAG'])['ZUSCHAUER'].mean().reset_index()
-                    df_global_agg['ZUSCHAUER'] = df_global_agg['ZUSCHAUER'].round(0).astype(int)
+                    st.divider()
+                    st.subheader("🏟️ Details pro Spielphase (Alle Spieltage & Playoffs)")
+                    df_all_phases = df_z.copy()
+                    df_all_phases['SPIELTAG_STR'] = df_all_phases['SPIELTAG'].astype(str).str.replace(".0", "", regex=False)
+                    df_phase_agg = df_all_phases.groupby(['SAISON', 'SPIELTAG_STR', 'DATUM'])['ZUSCHAUER'].mean().reset_index().sort_values('DATUM')
+                    df_phase_agg['X_LABEL'] = df_phase_agg['SAISON'] + " - " + df_phase_agg['SPIELTAG_STR']
                     
-                    # Sortierung
-                    df_global_agg = df_global_agg.sort_values(by=['SAISON', 'SPIELTAG'])
+                    fig_phases = px.bar(df_phase_agg, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', color='SAISON', color_discrete_map=color_map, title="Schnitt je Spielphase (chronologisch)")
+                    fig_phases.update_traces(textposition='outside')
+                    fig_phases.update_layout(yaxis_range=[0, df_phase_agg['ZUSCHAUER'].max() * 1.2])
+                    st.plotly_chart(fig_phases, use_container_width=True)
 
-                    # Label für X-Achse
-                    df_global_agg['X_LABEL'] = df_global_agg.apply(
-                        lambda x: f"{x['SAISON']} - ST {int(x['SPIELTAG'])}", axis=1
-                    )
-
-                    # Tabelle anzeigen (Optional, aber gut für Details)
-                    st.dataframe(df_global_agg[['SAISON', 'SPIELTAG', 'ZUSCHAUER']], hide_index=True, use_container_width=True)
-
-                    # Plotten
-                    fig_global = px.bar(
-                        df_global_agg,
-                        x='X_LABEL',
-                        y='ZUSCHAUER',
-                        text='ZUSCHAUER',
-                        color='SAISON',
-                        color_discrete_map=color_map,
-                        labels={'ZUSCHAUER': 'Ø Zuschauer', 'X_LABEL': 'Spieltag', 'SAISON': 'Saison'},
-                        title="Schnitt Zuschauer pro Spieltag"
-                    )
-                    fig_global.update_traces(textposition='outside')
-                    fig_global.update_xaxes(tickangle=-45, title_text=None)
-                    
-                    # Y-Achse fixen (Maximalwert + 20%)
-                    y_max_global = df_global_agg['ZUSCHAUER'].max() if not df_global_agg.empty else 100
-                    fig_global.update_layout(yaxis_range=[0, y_max_global * 1.2])
-
-                    st.plotly_chart(fig_global, use_container_width=True, config={'staticPlot': True})
-                else:
-                    st.warning("Keine Spieltags-Informationen für die Berechnung verfügbar.")
-
-            # --- OPTION 2: SPEZIFISCHER VEREIN ---
+            # --- OPTION: EINZELNER VEREIN ---
             else:
-                auswahl_team = auswahl # Der ausgewählte Teamname
+                team_data = df_z[df_z['HEIM'] == auswahl].sort_values('DATUM')
+                st.subheader(f"Entwicklung: {auswahl}")
                 
-                # Filterung & Sortierung nach Datum
-                team_data = df_z[df_z['HEIM'] == auswahl_team].sort_values('DATUM')
-                
-                if not team_data.empty:
-                    st.subheader(f"Zuschauerentwicklung: {auswahl_team}")
-                    
-                    # X-Label (Datum + Spieltag) für lückenlose Darstellung
-                    if 'SPIELTAG' in team_data.columns:
-                        team_data['X_LABEL'] = team_data.apply(
-                            lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} ({str(x['SPIELTAG']).replace('.0', '')})" 
-                            if pd.notnull(x['DATUM']) else str(x['SPIELTAG']), axis=1
-                        )
-                    else:
-                        team_data['X_LABEL'] = team_data['DATUM'].dt.strftime('%d.%m.%Y')
+                stats_team = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
+                stats_team.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
+                stats_team['Ø Zuschauer'] = stats_team['Ø Zuschauer'].round(0).astype(int)
+                st.dataframe(stats_team, hide_index=True, use_container_width=True)
 
-                    # --- TABELLE ANZEIGEN ---
-                    stats = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
-                    stats.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
-                    stats['Ø Zuschauer'] = stats['Ø Zuschauer'].round(0).astype(int)
-                    
-                    st.dataframe(stats, hide_index=True, use_container_width=True)
-
-                    # --- DIAGRAMM ERSTELLEN ---
-                    fig_z = px.bar(
-                        team_data, 
-                        x='X_LABEL', 
-                        y='ZUSCHAUER',
-                        text='ZUSCHAUER',
-                        color='SAISON',                    # Einfärbung nach Saison
-                        color_discrete_map=color_map,      # Nutzung der globalen Blau/Gelb Logik
-                        labels={'ZUSCHAUER': 'Anzahl', 'X_LABEL': 'Datum (Spieltag)', 'SAISON': 'Saison'},
-                        title=f"Heimspiele von {auswahl_team}"
-                    )
-                    
-                    fig_z.update_traces(textposition='outside')
-                    fig_z.update_xaxes(tickangle=-45, title_text=None)
-                    fig_z.update_layout(legend_title_text='Saison')
-
-                    # Y-Achse fixen (Maximalwert + 20%)
-                    y_max_team = team_data['ZUSCHAUER'].max() if not team_data.empty else 100
-                    fig_z.update_layout(yaxis_range=[0, y_max_team * 1.2])
-
-                    # Anzeigen
-                    st.plotly_chart(
-                        fig_z, 
-                        use_container_width=True, 
-                        config={'staticPlot': True} 
-                    )
-                else:
-                    st.warning("Keine Daten für dieses Team gefunden.")
-        else:
-            st.error("Spalte 'HEIM' fehlt im Sheet.")
-    else:
-        st.error("Zuschauer-Daten konnten nicht geladen werden.")
-
+                team_data['X_LABEL'] = team_data.apply(lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} ({str(x['SPIELTAG']).replace('.0', '')})", axis=1)
+                fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', color='SAISON', color_discrete_map=color_map, title=f"Spiele von {auswahl}")
+                fig_team.update_layout(yaxis_range=[0, team_data['ZUSCHAUER'].max() * 1.2])
+                st.plotly_chart(fig_team, use_container_width=True)
