@@ -196,34 +196,45 @@ with tab_zuschauer:
                     st.warning("Die erforderlichen Spalten (SAISON, SPIELTAG, AVERAGE_SPIELTAG) fehlen im Datensatz.")
 
             else:
-                team_data = df_z[df_z['HEIM'] == auswahl].sort_values('DATUM')
-                st.subheader(f"Entwicklung: {auswahl}")
-                stats_team = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
-                stats_team.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
-                stats_team['Ø Zuschauer'] = stats_team['Ø Zuschauer'].round(0).astype(int)
-                st.dataframe(stats_team, hide_index=True, use_container_width=True)
-
-                team_data['X_LABEL'] = team_data.apply(lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} (ST {str(x['SPIELTAG']).replace('.0', '')})", axis=1)
-                fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', color='SAISON', color_discrete_map=color_map, title=f"Heimspiele von {auswahl}")
-                
-                # 1. Werte immer ÜBER dem Balken anzeigen
-                fig_team.update_traces(textposition='outside')
-                
-                # 2. X-Achse um 45 Grad drehen
-                # 3. Y-Achse mit Puffer und erzwungenen Ticks (Linien)
-                fig_team.update_layout(
-                    xaxis_tickangle=-45,
-                    yaxis_range=[0, team_data['ZUSCHAUER'].max() * 1.25], # Genug Platz nach oben
-                    yaxis=dict(
-                        nticks=10, # Erzwingt mehrere Gitterlinien
-                        exponentformat="none"
-                    ),
-                    margin=dict(b=100) # Platz für die schräge Schrift unten
-                )
-                
-                st.plotly_chart(fig_team, use_container_width=True)
+                 # 1. Daten für das Team vorbereiten
+                    team_data = df_z[df_z['HEIM'] == auswahl].sort_values('DATUM')
+                    st.subheader(f"Entwicklung: {auswahl}")
+                    
+                    # --- NEU: DURCHSCHNITT JE SAISON ALS BALKEN ---
+                    # Wir rechnen aus, wie viele Fans im Schnitt pro Jahr da waren
+                    stats_saison = team_data.groupby('SAISON')['ZUSCHAUER'].mean().reset_index()
+                    stats_saison.columns = ['Saison', 'Ø Zuschauer']
+                    stats_saison['Ø Zuschauer'] = stats_saison['Ø Zuschauer'].round(0).astype(int)
+                    
+                    # Das Bild für die Jahres-Durchschnitte malen
+                    fig_avg = px.bar(stats_saison, x='Saison', y='Ø Zuschauer', text='Ø Zuschauer', 
+                                     title=f"Durchschnittliche Zuschauer pro Saison",
+                                     color='Saison', color_discrete_map=color_map)
+                    fig_avg.update_traces(textposition='outside')
+                    st.plotly_chart(fig_avg, use_container_width=True)
+                    
+                    # --- EINZELNE SPIELE ---
+                    # Hier bereiten wir die Namen für die untere Leiste vor (Datum + Spieltag)
+                    team_data['X_LABEL'] = team_data.apply(lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} (ST {str(x['SPIELTAG']).replace('.0', '')})", axis=1)
+                    
+                    # Das Bild für jedes einzelne Spiel malen
+                    fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', 
+                                     color='SAISON', color_discrete_map=color_map, 
+                                     title=f"Alle Heimspiele von {auswahl}")
+                    
+                    # Das Aussehen verschönern (Zahlen oben, Schrift schräg)
+                    fig_team.update_traces(textposition='outside')
+                    fig_team.update_layout(
+                        xaxis_tickangle=-45,
+                        yaxis_range=[0, team_data['ZUSCHAUER'].max() * 1.25], 
+                        yaxis=dict(nticks=10, exponentformat="none"),
+                        margin=dict(b=100)
+                    )
+                    
+                    st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
