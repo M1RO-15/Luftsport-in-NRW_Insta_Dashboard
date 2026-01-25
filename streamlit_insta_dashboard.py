@@ -207,7 +207,6 @@ with tab_zuschauer:
     if not df_z.empty:
         # Datenvorbereitung
         if 'DATUM' in df_z.columns:
-            # Wichtig: Datum in datetime umwandeln für korrekte Sortierung
             df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce')
         
         if 'ZUSCHAUER' in df_z.columns:
@@ -223,33 +222,17 @@ with tab_zuschauer:
             if not team_data.empty:
                 st.subheader(f"Zuschauerentwicklung: {auswahl_team}")
 
-                # --- SAISON-TABELLE BERECHNEN ---
-                # Wir basteln eine Funktion, die sagt: Alles ab Juli gehört zur neuen Saison.
+                # --- 1. SAISON & LABELS BERECHNEN ---
                 def get_season(d):
+                    if pd.isnull(d): return "Unbekannt"
                     if d.month >= 7:
                         return f"{d.year}/{d.year + 1}"
                     else:
                         return f"{d.year - 1}/{d.year}"
 
-                # Neue Spalte 'SAISON' erstellen
                 team_data['SAISON'] = team_data['DATUM'].apply(get_season)
-
-                # Rechnen: Wie viele Spiele? Wie viele Zuschauer im Schnitt?
-                stats = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
                 
-                # Tabelle schön machen (Namen ändern und runden)
-                stats.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
-                stats['Ø Zuschauer'] = stats['Ø Zuschauer'].round(0).astype(int)
-
-                # Tabelle anzeigen
-                st.dataframe(stats, hide_index=True, use_container_width=True)
-                
-                # --------------------------------
-                # --- LABEL GENERIERUNG (DATUM + SPIELTAG) ---
-                # Wir erstellen eine temporäre Spalte für die Beschriftung der X-Achse
-                # Format: "DD.MM.YYYY (X. Spieltag)"
-                
-                # Prüfen ob Spalte Spieltag existiert, sonst nur Datum
+                # X-Label erstellen (Datum + Spieltag)
                 if 'SPIELTAG' in team_data.columns:
                     team_data['X_LABEL'] = team_data.apply(
                         lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} ({str(x['SPIELTAG']).replace('.0', '')})" 
@@ -258,115 +241,56 @@ with tab_zuschauer:
                 else:
                     team_data['X_LABEL'] = team_data['DATUM'].dt.strftime('%d.%m.%Y')
 
-                # --- DATENVORBEREITUNG ---
-                # Wir brauchen zuerst die Saison-Spalte (wie im Schritt davor)
-                def get_season(d):
-                    if d.month >= 7:
-                        return f"{d.year}/{d.year + 1}"
-                    else:
-                        return f"{d.year - 1}/{d.year}"
-    
-                team_data['SAISON'] = team_data['DATUM'].apply(get_season)
-                
-                # WICHTIG: Index neu setzen, damit wir sauber zählen können (0, 1, 2...)
+                # Index resetten, damit wir gleich sauber durchiterieren können
                 team_data = team_data.reset_index(drop=True)
-    
-                # Tabelle oben drüber anzeigen (dein Wunsch von vorhin)
+
+                # --- 2. TABELLE ANZEIGEN ---
                 stats = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
                 stats.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
                 stats['Ø Zuschauer'] = stats['Ø Zuschauer'].round(0).astype(int)
+                
                 st.dataframe(stats, hide_index=True, use_container_width=True)
-    
-                # --- DIAGRAMM OHNE ZEITLÜCKEN ---
+
+                # --- 3. DIAGRAMM OHNE LÜCKEN ---
+                # Nutzung von 'X_LABEL' als Kategorie-Achse, nicht als Zeitachse
                 fig_z = px.bar(
                     team_data, 
-                    x='X_LABEL',    # Text-Label statt Datum -> keine Lücken
+                    x='X_LABEL', 
                     y='ZUSCHAUER',
                     text='ZUSCHAUER',
-                    color_discrete_sequence=['#0047AB'],
-                    labels={'ZUSCHAUER': 'Anzahl', 'X_LABEL': 'Spiel'},
+                    color_discrete_sequence=['#0047AB'], # Einheitsfarbe Blau
+                    labels={'ZUSCHAUER': 'Anzahl', 'X_LABEL': 'Datum (Spieltag)'},
                     title=f"Heimspiele von {auswahl_team}"
                 )
+                
                 fig_z.update_traces(textposition='outside')
-    
-                # --- LINIEN MANUELL BERECHNEN ---
-                # Wir laufen durch die Liste. Wenn sich die Saison ändert, malen wir einen Strich.
-                # Da es keine Zeitachse ist, nutzen wir die Position (Index):
-                # Zwischen Balken 4 und 5 ist die Position 3.5.
+                
+                # --- 4. SAISON-TRENNLINIEN MANUELL EINFÜGEN ---
+                # Da die X-Achse jetzt Kategorien sind (0, 1, 2...), müssen wir die Linien
+                # anhand des Index setzen. Ein Strich bei x=1.5 liegt genau zwischen Balken 1 und 2.
                 
                 for i in range(1, len(team_data)):
-                    # Vergleich: Ist die Saison in dieser Zeile anders als in der Zeile davor?
+                    # Wenn sich die Saison im Vergleich zur Zeile davor ändert...
                     if team_data.loc[i, 'SAISON'] != team_data.loc[i-1, 'SAISON']:
                         saison_name = team_data.loc[i, 'SAISON']
                         
-                        # Strich zeichnen genau zwischen den Balken (i - 0.5)
                         fig_z.add_vline(
-                            x=i - 0.5,  
+                            x=i - 0.5, # Position genau zwischen den Balken
                             line_width=2, 
                             line_dash="dash", 
                             line_color="gray",
                             annotation_text=saison_name,
                             annotation_position="top right"
                         )
-    
-                # x-Achse noch hübsch drehen
+
+                # X-Achse formatieren
                 fig_z.update_xaxes(tickangle=-45, title_text=None)
-    
-                st.plotly_chart(fig_z, use_container_width=True, config={'staticPlot': True})
-                    
-                    fig_z.update_traces(textposition='outside')
-    
-                    # Die Saison-Linien (add_vline) müssen wir hier weglassen, 
-                    # da sie auf diesem Diagramm-Typ nicht mehr richtig funktionieren.
-    
-                    # --- X-ACHSE FORMATIEREN ---
-                    # Nur noch das Drehen der Schrift ist nötig
-                    fig_z.update_xaxes(tickangle=-45, title_text=None)
-    
-                    st.plotly_chart(
-                        fig_z, 
-                        use_container_width=True, 
-                        config={'staticPlot': True}
-                    )
-                
-                # Werte auf den Balken anzeigen
-                fig_z.update_traces(textposition='outside')
-                
-                # --- SAISON-TRENNLINIEN (1. Juni) ---
-                # Wir ermitteln die Jahre im Datensatz und setzen am 1.6. eine Linie
-                min_year = team_data['DATUM'].min().year
-                max_year = team_data['DATUM'].max().year
-                
-                for year in range(min_year, max_year + 1):
-                    # Datum für den 1. Juni des Jahres
-                    season_cut_date = pd.Timestamp(year=year, month=6, day=1)
-                    
-                    # Nur zeichnen, wenn das Datum innerhalb des angezeigten Bereichs liegt
-                    if team_data['DATUM'].min() <= season_cut_date <= team_data['DATUM'].max():
-                        fig_z.add_vline(
-                            x=season_cut_date.timestamp() * 1000, # Millisekunden für Plotly Date Axis
-                            line_width=2, 
-                            line_dash="dash", 
-                            line_color="gray",
-                            annotation_text=f"Saison {year}/{year+1}",
-                            annotation_position="top right"
-                        )
 
-                # --- X-ACHSE FORMATIEREN ---
-                # Hier überschreiben wir die Zeit-Ticks mit unseren Labels
-                fig_z.update_xaxes(
-                    tickmode='array',
-                    tickvals=team_data['DATUM'], # Positionen (echtes Datum)
-                    ticktext=team_data['X_LABEL'], # Unser Text (Datum + Spieltag)
-                    tickangle=-45, # 45 Grad gedreht
-                    title_text=None
-                )
-
-                # Toolbar ausblenden & Zoom deaktivieren
+                # Anzeigen
                 st.plotly_chart(
                     fig_z, 
                     use_container_width=True, 
-                    config={'staticPlot': True}  # <--- Macht es zum reinen "Bild"
+                    config={'staticPlot': True} 
                 )
             else:
                 st.warning("Keine Daten für dieses Team gefunden.")
@@ -374,7 +298,3 @@ with tab_zuschauer:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
     else:
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
-
-
-
-
