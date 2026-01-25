@@ -11,53 +11,42 @@ ZUSCHAUER_SHEET_ID = "14puepYtteWGPD1Qv89gCpZijPm5Yrgr8glQnGBh3PXM"
 
 st.set_page_config(page_title="Futsal Insta-Analytics", layout="wide")
 
-# --- STYLING (DESIGN UPDATE: HIGH CONTRAST TABS) ---
+# --- STYLING ---
 st.markdown("""
 <style>
-    /* --- TAB STYLING (NEU: Button-Style mit hohem Kontrast) --- */
-    
-    /* Container der Tabs */
+    /* --- TAB STYLING --- */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px; /* Abstand zwischen den Tabs */
+        gap: 10px;
         background-color: transparent;
         padding-bottom: 10px;
     }
-
-    /* INAKTIVER TAB (Standard) */
     .stTabs [data-baseweb="tab"] {
         height: 30px;
-        background-color: #FFFFFF; /* Reinweiß */
-        border: 2px solid #D3D3D3; /* Hellgrauer Rahmen zur Abgrenzung */
-        border-radius: 0px; /* Abgerundete Ecken */
+        background-color: #FFFFFF;
+        border: 2px solid #D3D3D3;
+        border-radius: 0px;
         padding: 0px 10px;
-        color: #31333F; /* Dunkelgrauer Text für Lesbarkeit */
+        color: #31333F;
         font-weight: 100;
-        transition: all 0.3s ease; /* Weicher Übergang */
+        transition: all 0.3s ease;
     }
-
-    /* HOVER EFFEKT (Maus drüber) */
     .stTabs [data-baseweb="tab"]:hover {
         border-color: #0047AB;
-        background-color: #E8F0FE; /* Ganz helles Blau */
+        background-color: #E8F0FE;
         color: #0047AB;
     }
-
-    /* AKTIVER TAB (Ausgewählt) */
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background-color: #0047AB; /* Tiefes Blau */
+        background-color: #0047AB;
         border: 2px solid #0047AB;
-        color: #FFFFFF !important; /* Weißer Text - bester Kontrast */
-        box-shadow: 0px 4px 6px rgba(0, 71, 171, 0.3); /* Schatten für "Pop"-Effekt */
+        color: #FFFFFF !important;
+        box-shadow: 0px 4px 6px rgba(0, 71, 171, 0.3);
     }
-    
-    /* Text im aktiven Tab */
     .stTabs [data-baseweb="tab"][aria-selected="true"] p {
         color: #FFFFFF !important;
-        font-size: 18px; /* Etwas größer */
+        font-size: 18px;
         font-weight: bold;
     }
-
-    /* --- SELECTBOX DESIGN (Beibehalten) --- */
+    /* --- SELECTBOX DESIGN --- */
     div[data-baseweb="select"] > div {
         background-color: #FDFDFD;
         border: 2px solid #0047AB;
@@ -76,17 +65,6 @@ st.markdown("""
     }
     div[data-baseweb="select"] svg {
         fill: #0047AB !important;
-    }
-
-    /* --- DATAFRAME HINWEIS (Beibehalten) --- */
-    .instruction-text {
-        background-color: #FFF9C4;
-        padding: 10px;
-        border-left: 5px solid #FFD700;
-        border-radius: 4px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -108,13 +86,11 @@ def load_data(sheet_id, secret_key):
         return pd.DataFrame()
 
 # ==========================================
-# 1. KOPFBEREICH (Logo & Link)
+# 1. KOPFBEREICH
 # ==========================================
 
-# Wir laden Insta-Daten hier schon für den Header
 df = load_data(INSTA_SHEET_ID, "gcp_service_account")
 
-# Daten vorbereiten
 if not df.empty:
     if 'DATE' in df.columns:
         df['DATE'] = pd.to_datetime(df['DATE']).dt.date
@@ -122,7 +98,6 @@ if not df.empty:
     df = df.sort_values(by=['CLUB_NAME', 'DATE'])
     df = df.drop_duplicates(subset=['CLUB_NAME', 'DATE'], keep='last')
     
-    # Neueste Daten für Header
     df_latest = df.sort_values('DATE').groupby('CLUB_NAME').last().reset_index()
     df_latest = df_latest.sort_values(by='FOLLOWER', ascending=False)
     
@@ -132,14 +107,12 @@ else:
     summe_follower = "0"
     akt_datum = "-"
 
-# Header Anzeige
 try:
     st.image("banner_statistik_dashboard.png", width=450)
 except:
     st.title("Futsal Dashboard") 
 
 st.markdown(f"[www.misterfutsal.de](https://www.misterfutsal.de) | :grey[Stand {akt_datum}]")
-
 st.divider()
 
 # ==========================================
@@ -150,23 +123,17 @@ tab_insta, tab_zuschauer = st.tabs(["📸 Instagram Dashboard", "🏟️ Zuschau
 # --- TAB 1: INSTAGRAM ---
 with tab_insta:
     if not df.empty:
-        # Daten weiterverarbeiten
         df_latest.insert(0, 'RANG', range(1, len(df_latest) + 1))
-        
         df_latest_display = df_latest.copy()
         df_latest_display['RANG'] = df_latest_display['RANG'].astype(str)
         df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
         df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
 
-        # --- OBERE REIHE ---
         row1_col1, row1_col2 = st.columns(2, gap="medium")
-        h_tables = 2150 
 
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
-            #st.markdown('<div class="instruction-text">👇 Klicke in die Tabelle, um Vereine auszuwählen!</div>', unsafe_allow_html=True)
             st.markdown("**:yellow[👇 Wähle hier einen oder mehrere Vereine aus!]**")
-            
             selection = st.dataframe(
                 df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
                 column_config={
@@ -179,7 +146,7 @@ with tab_insta:
                 on_select="rerun",
                 selection_mode="multi-row",
                 use_container_width=True,
-                height=h_tables
+                height=2150
             )
 
         with row1_col2:
@@ -187,18 +154,9 @@ with tab_insta:
             if selection and selection.selection.rows:
                 sel_indices = selection.selection.rows
                 sel_clubs = df_latest.iloc[sel_indices]['CLUB_NAME'].tolist()
-                
                 plot_data = df[df['CLUB_NAME'].isin(sel_clubs)].sort_values(['CLUB_NAME', 'DATE'])
                 
-                fig_detail = px.line(
-                    plot_data, 
-                    x='DATE', 
-                    y='FOLLOWER', 
-                    color='CLUB_NAME', 
-                    title="Vergleich der Vereine", 
-                    markers=True
-                )
-                
+                fig_detail = px.line(plot_data, x='DATE', y='FOLLOWER', color='CLUB_NAME', title="Vergleich der Vereine", markers=True)
                 fig_detail.update_xaxes(title_text=None, tickformat="%d.%m.%Y")
                 st.plotly_chart(fig_detail, use_container_width=True)
             else:
@@ -206,9 +164,7 @@ with tab_insta:
 
         st.divider()
 
-        # --- UNTERE REIHE ---
         row2_col1, row2_col2 = st.columns(2, gap="medium")
-
         with row2_col1:
             st.subheader("📈 Wachstumstrends")
             latest_date_global = df['DATE'].max()
@@ -220,26 +176,16 @@ with tab_insta:
             df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
             df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
 
-            # TOP 10 GRAFIK
             df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
             df_top10['CLUB_NAME'] = df_top10['CLUB_NAME'].str[:20]
-            
-            fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
-                             title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
-            fig_top.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
+            fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'], text='Zuwachs')
             fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
-            fig_top.update_yaxes(title_text=None)
             st.plotly_chart(fig_top, use_container_width=True, config={'staticPlot': True})
 
-            # BOTTOM 10 GRAFIK
             df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10).copy()
             df_bottom10['CLUB_NAME'] = df_bottom10['CLUB_NAME'].str[:20]
-            
-            fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
-                                title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
-            fig_bottom.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
+            fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
             fig_bottom.update_layout(yaxis={'categoryorder':'total descending'})
-            fig_bottom.update_yaxes(title_text=None)
             st.plotly_chart(fig_bottom, use_container_width=True, config={'staticPlot': True})
 
         with row2_col2:
@@ -247,11 +193,9 @@ with tab_insta:
             st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
             df_total_history = df.groupby('DATE')['FOLLOWER'].sum().reset_index()
             fig_total = px.line(df_total_history, x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200'])
-            fig_total.update_layout(separators=',.')
             fig_total.update_yaxes(tickformat=',d')
-            fig_total.update_xaxes(title_text=None, tickformat="%d.%m.%Y")
+            fig_total.update_xaxes(tickformat="%d.%m.%Y")
             st.plotly_chart(fig_total, use_container_width=True, config={'staticPlot': True})
-
     else:
         st.error("Instagram-Daten konnten nicht geladen werden.")
 
@@ -261,49 +205,84 @@ with tab_zuschauer:
     df_z = load_data(ZUSCHAUER_SHEET_ID, "gcp_service_account")
 
     if not df_z.empty:
-        # 1. Datenbereinigung und Typkonvertierung
+        # Datenvorbereitung
         if 'DATUM' in df_z.columns:
-            df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce').dt.date
+            # Wichtig: Datum in datetime umwandeln für korrekte Sortierung
+            df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce')
+        
         if 'ZUSCHAUER' in df_z.columns:
             df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
         
-        # Sicherstellen, dass SAISON existiert, falls nicht im Sheet
-        if 'SAISON' not in df_z.columns:
-            df_z['SAISON'] = "Unbekannt"
-        else:
-            # Saison als String erzwingen, damit es als diskrete Kategorie (Farbe) erkannt wird
-            df_z['SAISON'] = df_z['SAISON'].astype(str)
-
-        # 2. Auswahl des Heimteams
         if 'HEIM' in df_z.columns:
             heim_teams = sorted(df_z['HEIM'].unique())
             auswahl_team = st.selectbox("Wähle einen Verein (Heimteam):", heim_teams)
 
-            # 3. Daten filtern und sortieren
+            # Filterung & Sortierung nach Datum
             team_data = df_z[df_z['HEIM'] == auswahl_team].sort_values('DATUM')
             
             if not team_data.empty:
                 st.subheader(f"Zuschauerentwicklung: {auswahl_team}")
                 
-                # 4. Linien-Diagramm erstellen
-                # color='SAISON' sorgt dafür, dass die Linie je nach Saison eine andere Farbe hat/getrennt wird
-                fig_z = px.line(
+                # --- LABEL GENERIERUNG (DATUM + SPIELTAG) ---
+                # Wir erstellen eine temporäre Spalte für die Beschriftung der X-Achse
+                # Format: "DD.MM.YYYY (X. Spieltag)"
+                
+                # Prüfen ob Spalte Spieltag existiert, sonst nur Datum
+                if 'SPIELTAG' in team_data.columns:
+                    team_data['X_LABEL'] = team_data.apply(
+                        lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} ({str(x['SPIELTAG']).replace('.0', '')})" 
+                        if pd.notnull(x['DATUM']) else str(x['SPIELTAG']), axis=1
+                    )
+                else:
+                    team_data['X_LABEL'] = team_data['DATUM'].dt.strftime('%d.%m.%Y')
+
+                # --- BALKENDIAGRAMM ---
+                # Wir nutzen 'DATUM' für x, damit Plotly die Zeitachse versteht (Abstände),
+                # überschreiben aber die Beschriftung.
+                fig_z = px.bar(
                     team_data, 
                     x='DATUM', 
                     y='ZUSCHAUER',
-                    color='SAISON',  # Unterscheidung nach Saison
-                    markers=True,
-                    labels={'ZUSCHAUER': 'Anzahl Zuschauer', 'DATUM': 'Datum', 'SAISON': 'Saison'},
+                    text='ZUSCHAUER',
+                    color_discrete_sequence=['#0047AB'], # Einheitsfarbe Blau
+                    labels={'ZUSCHAUER': 'Anzahl', 'DATUM': 'Datum'},
                     title=f"Heimspiele von {auswahl_team}"
                 )
                 
-                fig_z.update_xaxes(tickformat="%d.%m.%Y")
-                fig_z.update_layout(hovermode="x unified") # Zeigt Infos beim Drüberfahren an
+                # Werte auf den Balken anzeigen
+                fig_z.update_traces(textposition='outside')
+                
+                # --- SAISON-TRENNLINIEN (1. Juni) ---
+                # Wir ermitteln die Jahre im Datensatz und setzen am 1.6. eine Linie
+                min_year = team_data['DATUM'].min().year
+                max_year = team_data['DATUM'].max().year
+                
+                for year in range(min_year, max_year + 1):
+                    # Datum für den 1. Juni des Jahres
+                    season_cut_date = pd.Timestamp(year=year, month=6, day=1)
+                    
+                    # Nur zeichnen, wenn das Datum innerhalb des angezeigten Bereichs liegt
+                    if team_data['DATUM'].min() <= season_cut_date <= team_data['DATUM'].max():
+                        fig_z.add_vline(
+                            x=season_cut_date.timestamp() * 1000, # Millisekunden für Plotly Date Axis
+                            line_width=2, 
+                            line_dash="dash", 
+                            line_color="gray",
+                            annotation_text=f"Saison {year}/{year+1}",
+                            annotation_position="top right"
+                        )
 
-                # 5. Anzeigen (Nicht editierbar: Toolbar ausgeblendet, Zoom deaktiviert)
-                # 'displayModeBar': False versteckt die Werkzeugleiste
-                # 'staticPlot': True würde es komplett starr machen (auch kein Hover). 
-                # Hier nutzen wir eine config, die Hover erlaubt, aber Manipulation verbietet.
+                # --- X-ACHSE FORMATIEREN ---
+                # Hier überschreiben wir die Zeit-Ticks mit unseren Labels
+                fig_z.update_xaxes(
+                    tickmode='array',
+                    tickvals=team_data['DATUM'], # Positionen (echtes Datum)
+                    ticktext=team_data['X_LABEL'], # Unser Text (Datum + Spieltag)
+                    tickangle=-90, # 90 Grad gedreht
+                    title_text=None
+                )
+
+                # Toolbar ausblenden & Zoom deaktivieren
                 st.plotly_chart(
                     fig_z, 
                     use_container_width=True, 
