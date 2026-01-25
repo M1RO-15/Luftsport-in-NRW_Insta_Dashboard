@@ -214,7 +214,7 @@ with tab_zuschauer:
                                      color='Saison', color_discrete_map=color_map)
                     fig_avg.update_traces(textposition='outside')
                     fig_avg.update_layout(
-                        yaxis_range=[0, team_data['ZUSCHAUER'].max() * 1.25], 
+                        yaxis_range=[0, stats_saison['Ø Zuschauer'].max() * 1.25], 
                         yaxis=dict(nticks=10, exponentformat="none"),
                         margin=dict(b=100)
                     )
@@ -241,6 +241,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
