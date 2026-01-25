@@ -238,15 +238,17 @@ with tab_zuschauer:
                     # Das Aussehen verschönern (Zahlen oben, Schrift schräg)
                     fig_team.update_traces(textposition='outside')
                     fig_team.update_layout(
+                        xaxis=dict(fixedrange=True),
                         xaxis_tickangle=-45,
                         yaxis_range=[0, team_data['ZUSCHAUER'].max() * 1.25], 
-                        yaxis=dict(nticks=10, exponentformat="none"),
+                        yaxis=dict(fixedrange=True, nticks=10, exponentformat="none"),
                         margin=dict(b=100)
                     )
                     
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
