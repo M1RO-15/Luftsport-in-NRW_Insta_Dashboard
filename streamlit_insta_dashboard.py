@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 INSTA_SHEET_ID = "1_Ni1ALTrq3qkgXxgBaG2TNjRBodCEaYewhhTPq0aWfU"
 ZUSCHAUER_SHEET_ID = "14puepYtteWGPD1Qv89gCpZijPm5Yrgr8glQnGBh3PXM"
 
-st.set_page_config(page_title="Futsal Analytics Dashboard", layout="wide")
+st.set_page_config(page_title="Futsal Statistik Dashboard", layout="wide")
 
 # --- STYLING ---
 st.markdown("""
@@ -70,7 +70,7 @@ st.divider()
 # ==========================================
 # 2. REITER / TABS
 # ==========================================
-tab_insta, tab_zuschauer = st.tabs(["📸 Instagram Dashboard", "🏟️ Zuschauer Dashboard"])
+tab_insta, tab_zuschauer = st.tabs(["📸 Instagram Follower", "🏟️ Bundesliga Zuschauer"])
 
 # --- TAB 1: INSTAGRAM ---
 with tab_insta:
@@ -248,6 +248,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
