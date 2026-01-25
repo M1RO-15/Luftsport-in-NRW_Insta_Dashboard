@@ -25,7 +25,7 @@ st.markdown("""
 
     /* INAKTIVER TAB (Standard) */
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
+        height: 40px;
         background-color: #FFFFFF; /* Reinweiß */
         border: 2px solid #D3D3D3; /* Hellgrauer Rahmen zur Abgrenzung */
         border-radius: 8px; /* Abgerundete Ecken */
@@ -289,6 +289,7 @@ with tab_zuschauer:
                 st.warning("Keine Daten für dieses Team gefunden.")
         else:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
+
 
 
 
