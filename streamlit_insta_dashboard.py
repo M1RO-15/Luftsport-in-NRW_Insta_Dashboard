@@ -141,11 +141,20 @@ with tab_zuschauer:
                 if 'SPIELTAG' in df_z.columns:
                     st.divider()
                     st.subheader("🏟️ Details pro Spielphase (Alle Spieltage & Playoffs)")
-                    # Deduplizierung: Pro Saison und Spieltag nur ein Eintrag (Basis: AVERAGE_SPIELTAG)
-                    df_phase_agg = df_z.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values('DATUM').copy()
-                    df_phase_agg['SPIELTAG_STR'] = df_phase_agg['SPIELTAG'].astype(str).str.replace(".0", "", regex=False)
+                    
+                    # 1. Daten säubern für saubere Deduplizierung
+                    df_z['SAISON'] = df_z['SAISON'].astype(str).str.strip()
+                    df_z['SPIELTAG_STR'] = df_z['SPIELTAG'].astype(str).str.replace(".0", "", regex=False).str.strip()
+                    
+                    # 2. Deduplizierung: Pro Saison und Spieltag nur einen einzigen Wert behalten
+                    # Wir gruppieren nach Saison und Spieltag und nehmen den ersten gefundenen Wert aus AVERAGE_SPIELTAG
+                    df_phase_agg = df_z.groupby(['SAISON', 'SPIELTAG_STR'], as_index=False).first()
+                    df_phase_agg = df_phase_agg.sort_values('DATUM')
+                    
+                    # 3. Label bauen
                     df_phase_agg['X_LABEL'] = df_phase_agg['SAISON'] + " - " + df_phase_agg['SPIELTAG_STR']
                     
+                    # 4. Grafik mit den unveränderten Werten aus AVERAGE_SPIELTAG
                     fig_phases = px.bar(df_phase_agg, x='X_LABEL', y='AVERAGE_SPIELTAG', text='AVERAGE_SPIELTAG', color='SAISON', color_discrete_map=color_map, title="Schnitt je Spielphase (chronologisch)")
                     fig_phases.update_traces(textposition='outside')
                     fig_phases.update_layout(yaxis_range=[0, df_phase_agg['AVERAGE_SPIELTAG'].max() * 1.2])
