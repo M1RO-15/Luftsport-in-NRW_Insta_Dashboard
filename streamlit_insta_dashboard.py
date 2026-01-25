@@ -82,6 +82,7 @@ with tab_insta:
         df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
         
         row1_col1, row1_col2 = st.columns(2, gap="medium")
+        h_tables = 2150
         
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
@@ -216,3 +217,4 @@ with tab_zuschauer:
 
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
