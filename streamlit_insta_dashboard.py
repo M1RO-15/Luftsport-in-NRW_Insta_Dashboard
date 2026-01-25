@@ -113,7 +113,6 @@ with tab_zuschauer:
     if not df_z.empty:
         if 'DATUM' in df_z.columns: df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce')
         if 'ZUSCHAUER' in df_z.columns: df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
-        if 'AVERAGE_SPIELTAG' in df_z.columns: df_z['AVERAGE_SPIELTAG'] = pd.to_numeric(df_z['AVERAGE_SPIELTAG'], errors='coerce').fillna(0)
         
         def get_season(d):
             if pd.isnull(d): return "Unbekannt"
@@ -141,30 +140,14 @@ with tab_zuschauer:
                 if 'SPIELTAG' in df_z.columns:
                     st.divider()
                     st.subheader("🏟️ Details pro Spielphase (Alle Spieltage & Playoffs)")
-                    
-                    # 1. Daten für die Grafik vorbereiten
-                    df_phases = df_z.copy()
-                    df_phases['SPIELTAG_STR'] = df_phases['SPIELTAG'].astype(str).str.replace(".0", "", regex=False)
-                    
-                    # 2. STRENGSTE DEDUPLIZIERUNG: Pro Saison und Spieltag nur einen Wert behalten
-                    df_phase_agg = df_phases.sort_values('DATUM').drop_duplicates(subset=['SAISON', 'SPIELTAG_STR'], keep='first')
-                    
-                    # 3. Label bauen
+                    df_all_phases = df_z.copy()
+                    df_all_phases['SPIELTAG_STR'] = df_all_phases['SPIELTAG'].astype(str).str.replace(".0", "", regex=False)
+                    df_phase_agg = df_all_phases.groupby(['SAISON', 'SPIELTAG_STR', 'DATUM'])['ZUSCHAUER'].mean().reset_index().sort_values('DATUM')
                     df_phase_agg['X_LABEL'] = df_phase_agg['SAISON'] + " - " + df_phase_agg['SPIELTAG_STR']
                     
-                    # 4. Grafik zeichnen (barmode='group' verhindert das Aufstapeln)
-                    fig_phases = px.bar(
-                        df_phase_agg, 
-                        x='X_LABEL', 
-                        y='AVERAGE_SPIELTAG', 
-                        text='AVERAGE_SPIELTAG', 
-                        color='SAISON', 
-                        color_discrete_map=color_map,
-                        title="Schnitt je Spielphase (chronologisch)",
-                        barmode='group'
-                    )
+                    fig_phases = px.bar(df_phase_agg, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', color='SAISON', color_discrete_map=color_map, title="Schnitt je Spielphase (chronologisch)")
                     fig_phases.update_traces(textposition='outside')
-                    fig_phases.update_layout(yaxis_range=[0, df_phase_agg['AVERAGE_SPIELTAG'].max() * 1.5])
+                    fig_phases.update_layout(yaxis_range=[0, df_phase_agg['ZUSCHAUER'].max() * 1.2])
                     st.plotly_chart(fig_phases, use_container_width=True, config={'staticPlot': True})
 
             else:
