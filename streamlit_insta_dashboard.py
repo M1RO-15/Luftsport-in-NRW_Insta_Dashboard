@@ -257,49 +257,66 @@ with tab_insta:
 
 # --- TAB 2: ZUSCHAUER ---
 with tab_zuschauer:
-    st.header("🏟️ Zuschauer-Statistiken der Futsal-Bundesliga (seit 2021/2022)")
+    st.header("🏟️ Zuschauer-Statistiken der Futsal-Bundesliga")
     df_z = load_data(ZUSCHAUER_SHEET_ID, "gcp_service_account")
 
     if not df_z.empty:
+        # 1. Datenbereinigung und Typkonvertierung
         if 'DATUM' in df_z.columns:
             df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce').dt.date
         if 'ZUSCHAUER' in df_z.columns:
             df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
+        
+        # Sicherstellen, dass SAISON existiert, falls nicht im Sheet
+        if 'SAISON' not in df_z.columns:
+            df_z['SAISON'] = "Unbekannt"
+        else:
+            # Saison als String erzwingen, damit es als diskrete Kategorie (Farbe) erkannt wird
+            df_z['SAISON'] = df_z['SAISON'].astype(str)
 
+        # 2. Auswahl des Heimteams
         if 'HEIM' in df_z.columns:
             heim_teams = sorted(df_z['HEIM'].unique())
-            
             auswahl_team = st.selectbox("Wähle einen Verein (Heimteam):", heim_teams)
 
+            # 3. Daten filtern und sortieren
             team_data = df_z[df_z['HEIM'] == auswahl_team].sort_values('DATUM')
             
             if not team_data.empty:
-                st.subheader(f"Zuschauer bei {auswahl_team}")
-                fig_z = px.bar(
+                st.subheader(f"Zuschauerentwicklung: {auswahl_team}")
+                
+                # 4. Linien-Diagramm erstellen
+                # color='SAISON' sorgt dafür, dass die Linie je nach Saison eine andere Farbe hat/getrennt wird
+                fig_z = px.line(
                     team_data, 
                     x='DATUM', 
                     y='ZUSCHAUER',
-                    text='ZUSCHAUER',
-                    color_discrete_sequence=['#0047AB'],
-                    labels={'ZUSCHAUER': 'Anzahl', 'DATUM': 'Datum'}
+                    color='SAISON',  # Unterscheidung nach Saison
+                    markers=True,
+                    labels={'ZUSCHAUER': 'Anzahl Zuschauer', 'DATUM': 'Datum', 'SAISON': 'Saison'},
+                    title=f"Heimspiele von {auswahl_team}"
                 )
-                fig_z.update_traces(textposition='outside')
-                st.plotly_chart(fig_z, use_container_width=True)
+                
+                fig_z.update_xaxes(tickformat="%d.%m.%Y")
+                fig_z.update_layout(hovermode="x unified") # Zeigt Infos beim Drüberfahren an
+
+                # 5. Anzeigen (Nicht editierbar: Toolbar ausgeblendet, Zoom deaktiviert)
+                # 'displayModeBar': False versteckt die Werkzeugleiste
+                # 'staticPlot': True würde es komplett starr machen (auch kein Hover). 
+                # Hier nutzen wir eine config, die Hover erlaubt, aber Manipulation verbietet.
+                st.plotly_chart(
+                    fig_z, 
+                    use_container_width=True, 
+                    config={
+                        'displayModeBar': False, 
+                        'scrollZoom': False,
+                        'showAxisDragHandles': False,
+                        'editable': False
+                    }
+                )
             else:
                 st.warning("Keine Daten für dieses Team gefunden.")
         else:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    else:
+        st.error("Zuschauer-Daten konnten nicht geladen werden.")
