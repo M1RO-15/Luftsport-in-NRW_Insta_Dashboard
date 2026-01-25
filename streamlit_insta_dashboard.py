@@ -141,7 +141,7 @@ with tab_zuschauer:
                 df_global_dedup = df_clean.drop_duplicates(subset=['SEASON_ID', 'SPIELTAG_ID']).copy()
                 
                 # Berechnung der Saisonschnitte basierend auf den deduplizierten AVERAGE_SPIELTAG Werten
-                stats_year = df_global_dedup.groupby('SEASON')['AVERAGE_SPIELTAG'].agg(['count', 'mean']).reset_index()
+                stats_year = df_global_dedup
                 stats_year.columns = ['Saison', 'Anzahl Spieltage', 'Ø Zuschauer']
                 stats_year['Ø Zuschauer'] = stats_year['Ø Zuschauer'].round(0).astype(int)
                 
@@ -205,3 +205,4 @@ with tab_zuschauer:
                 st.plotly_chart(fig_team, use_container_width=True, config={'staticPlot': True})
 
     else: st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
