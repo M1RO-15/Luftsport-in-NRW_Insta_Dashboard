@@ -128,24 +128,26 @@ with tab_insta:
             # Namen auf 20 Zeichen kürzen
             df_trend['CLUB_NAME_SHORT'] = df_trend['CLUB_NAME'].apply(lambda x: x[:20] + '...' if len(x) > 20 else x)
 
-            # Top 10 Gewinner als statisches Bild
+            # Top 10 Gewinner
             fig_win = px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'], text='Zuwachs')
             fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None)
-            # Beschriftung nach links innen setzen
-            fig_win.update_traces(textposition='inside', insidetextanchor='start')
+            # Text weiß, 90 Grad gedreht, links im Balken
+            fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='white', textangle=-90)
             st.plotly_chart(fig_win, use_container_width=True, config={'staticPlot': True})
 
-            # Geringstes Wachstum als statisches Bild
+            # Geringstes Wachstum
             fig_loss = px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
             fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None)
-            # Beschriftung nach links innen setzen
-            fig_loss.update_traces(textposition='inside', insidetextanchor='start')
+            # Text weiß, 90 Grad gedreht, links im Balken
+            fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='white', textangle=-90)
             st.plotly_chart(fig_loss, use_container_width=True, config={'staticPlot': True})
             
         with row2_col2:
             st.subheader("🌐 Gesamtentwicklung Deutschland")
             st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
-            st.plotly_chart(px.line(df_insta.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d'), use_container_width=True)
+            fig_total = px.line(df_insta.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d')
+            # Als fixes Bild anzeigen
+            st.plotly_chart(fig_total, use_container_width=True, config={'staticPlot': True})
     else: 
         st.error("Instagram-Daten konnten nicht geladen werden.")
 
