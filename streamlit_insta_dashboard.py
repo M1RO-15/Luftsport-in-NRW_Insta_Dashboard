@@ -262,7 +262,7 @@ with tab_zuschauer:
 
     if not df_z.empty:
         if 'DATUM' in df_z.columns:
-            df_z['DATUM'] = pd.to_datetime(df_z['DATUM']).dt.date
+            df_z['DATUM'] = pd.to_datetime(df_z['DATUM'], dayfirst=True, errors='coerce').dt.date
         if 'ZUSCHAUER' in df_z.columns:
             df_z['ZUSCHAUER'] = pd.to_numeric(df_z['ZUSCHAUER'], errors='coerce').fillna(0)
 
@@ -289,6 +289,7 @@ with tab_zuschauer:
                 st.warning("Keine Daten für dieses Team gefunden.")
         else:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
+
 
 
 
