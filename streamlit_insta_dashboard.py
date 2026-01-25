@@ -115,23 +115,45 @@ with tab_insta:
         
         row2_col1, row2_col2 = st.columns(2, gap="medium")
         with row2_col1:
-            st.subheader("📈 Wachstumstrends (4 Wochen)")
-            latest_date_global = df_insta['DATE'].max()
+            st.subheader("📈 Wachstumstrends")
+            latest_date_global = df['DATE'].max()
             target_date_4w = latest_date_global - timedelta(weeks=4)
-            available_dates = sorted(df_insta['DATE'].unique())
+            available_dates = sorted(df['DATE'].unique())
             closest_old_date = min(available_dates, key=lambda x: x if x <= target_date_4w else available_dates[0])
-            
-            df_then = df_insta[df_insta['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
+            df_then = df[df['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
             df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
             df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
+    
+            # NEU: Hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
+            df_top10 = df_trend.sort_values(by='Zuwachs', ascending=False).head(10).copy()
+            df_top10['CLUB_NAME'] = df_top10['CLUB_NAME'].str[:20]
             
-            st.plotly_chart(px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME', orientation='h', title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'], text='Zuwachs').update_layout(yaxis={'categoryorder':'total ascending'}), use_container_width=True)
-            st.plotly_chart(px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME', orientation='h', title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'], text='Zuwachs').update_layout(yaxis={'categoryorder':'total descending'}), use_container_width=True)
+            fig_top = px.bar(df_top10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
+                             title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
+            fig_top.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
+            fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
+            fig_top.update_yaxes(title_text=None)
+            st.plotly_chart(fig_top, use_container_width=True, config={'staticPlot': True})
+    
+            # NEU: Auch hier werden die Namen für die Grafik auf 15 Zeichen gekürzt
+            df_bottom10 = df_trend.sort_values(by='Zuwachs', ascending=True).head(10).copy()
+            df_bottom10['CLUB_NAME'] = df_bottom10['CLUB_NAME'].str[:20]
             
+            fig_bottom = px.bar(df_bottom10, x='Zuwachs', y='CLUB_NAME', orientation='h', 
+                                title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
+            fig_bottom.update_traces(textposition='inside', insidetextanchor='start', textangle=0)
+            fig_bottom.update_layout(yaxis={'categoryorder':'total descending'})
+            fig_bottom.update_yaxes(title_text=None)
+            st.plotly_chart(fig_bottom, use_container_width=True, config={'staticPlot': True})
+    
         with row2_col2:
             st.subheader("🌐 Gesamtentwicklung Deutschland")
-            st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
-            st.plotly_chart(px.line(df_insta.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d'), use_container_width=True)
+            df_total_history = df.groupby('DATE')['FOLLOWER'].sum().reset_index()
+            fig_total = px.line(df_total_history, x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200'])
+            fig_total.update_layout(separators=',.')
+            fig_total.update_yaxes(tickformat=',d')
+            fig_total.update_xaxes(title_text=None, tickformat="%d.%m.%Y")
+            st.plotly_chart(fig_total, use_container_width=True, config={'staticPlot': True})
     else: 
         st.error("Instagram-Daten konnten nicht geladen werden.")
 
@@ -221,5 +243,6 @@ with tab_zuschauer:
 
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
