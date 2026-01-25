@@ -222,7 +222,29 @@ with tab_zuschauer:
             
             if not team_data.empty:
                 st.subheader(f"Zuschauerentwicklung: {auswahl_team}")
+
+                # --- SAISON-TABELLE BERECHNEN ---
+                # Wir basteln eine Funktion, die sagt: Alles ab Juli gehört zur neuen Saison.
+                def get_season(d):
+                    if d.month >= 7:
+                        return f"{d.year}/{d.year + 1}"
+                    else:
+                        return f"{d.year - 1}/{d.year}"
+
+                # Neue Spalte 'SAISON' erstellen
+                team_data['SAISON'] = team_data['DATUM'].apply(get_season)
+
+                # Rechnen: Wie viele Spiele? Wie viele Zuschauer im Schnitt?
+                stats = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
                 
+                # Tabelle schön machen (Namen ändern und runden)
+                stats.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
+                stats['Ø Zuschauer'] = stats['Ø Zuschauer'].round(0).astype(int)
+
+                # Tabelle anzeigen
+                st.dataframe(stats, hide_index=True, use_container_width=True)
+                
+                # --------------------------------
                 # --- LABEL GENERIERUNG (DATUM + SPIELTAG) ---
                 # Wir erstellen eine temporäre Spalte für die Beschriftung der X-Achse
                 # Format: "DD.MM.YYYY (X. Spieltag)"
@@ -294,4 +316,5 @@ with tab_zuschauer:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
     else:
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
