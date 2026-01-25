@@ -258,7 +258,7 @@ with tab_insta:
 # --- TAB 2: ZUSCHAUER ---
 with tab_zuschauer:
     st.header("🏟️ Zuschauer-Statistiken")
-    df_z = load_data(ZUSCHAUER_SHEET_ID, "Google_Sheets_zuschauer")
+    df_z = load_data(ZUSCHAUER_SHEET_ID, "gcp_service_account")
 
     if not df_z.empty:
         if 'DATUM' in df_z.columns:
@@ -289,6 +289,7 @@ with tab_zuschauer:
                 st.warning("Keine Daten für dieses Team gefunden.")
         else:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
+
 
 
 
