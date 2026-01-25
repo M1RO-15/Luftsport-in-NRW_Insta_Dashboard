@@ -258,33 +258,76 @@ with tab_zuschauer:
                 else:
                     team_data['X_LABEL'] = team_data['DATUM'].dt.strftime('%d.%m.%Y')
 
-# --- BALKENDIAGRAMM (ohne Zeitlücken) ---
-                # Wir nehmen 'X_LABEL' für die x-Achse. 
-                # Da die Daten sortiert sind, stimmt die Reihenfolge, aber die Lücken sind weg.
+                # --- DATENVORBEREITUNG ---
+                # Wir brauchen zuerst die Saison-Spalte (wie im Schritt davor)
+                def get_season(d):
+                    if d.month >= 7:
+                        return f"{d.year}/{d.year + 1}"
+                    else:
+                        return f"{d.year - 1}/{d.year}"
+    
+                team_data['SAISON'] = team_data['DATUM'].apply(get_season)
+                
+                # WICHTIG: Index neu setzen, damit wir sauber zählen können (0, 1, 2...)
+                team_data = team_data.reset_index(drop=True)
+    
+                # Tabelle oben drüber anzeigen (dein Wunsch von vorhin)
+                stats = team_data.groupby('SAISON')['ZUSCHAUER'].agg(['count', 'mean']).reset_index()
+                stats.columns = ['Saison', 'Anzahl Spiele', 'Ø Zuschauer']
+                stats['Ø Zuschauer'] = stats['Ø Zuschauer'].round(0).astype(int)
+                st.dataframe(stats, hide_index=True, use_container_width=True)
+    
+                # --- DIAGRAMM OHNE ZEITLÜCKEN ---
                 fig_z = px.bar(
                     team_data, 
-                    x='X_LABEL',    # <--- ÄNDERUNG: Label statt Datum
+                    x='X_LABEL',    # Text-Label statt Datum -> keine Lücken
                     y='ZUSCHAUER',
                     text='ZUSCHAUER',
                     color_discrete_sequence=['#0047AB'],
-                    labels={'ZUSCHAUER': 'Anzahl', 'X_LABEL': 'Datum (Spieltag)'}, # <--- Label angepasst
+                    labels={'ZUSCHAUER': 'Anzahl', 'X_LABEL': 'Spiel'},
                     title=f"Heimspiele von {auswahl_team}"
                 )
-                
                 fig_z.update_traces(textposition='outside')
-
-                # Die Saison-Linien (add_vline) müssen wir hier weglassen, 
-                # da sie auf diesem Diagramm-Typ nicht mehr richtig funktionieren.
-
-                # --- X-ACHSE FORMATIEREN ---
-                # Nur noch das Drehen der Schrift ist nötig
+    
+                # --- LINIEN MANUELL BERECHNEN ---
+                # Wir laufen durch die Liste. Wenn sich die Saison ändert, malen wir einen Strich.
+                # Da es keine Zeitachse ist, nutzen wir die Position (Index):
+                # Zwischen Balken 4 und 5 ist die Position 3.5.
+                
+                for i in range(1, len(team_data)):
+                    # Vergleich: Ist die Saison in dieser Zeile anders als in der Zeile davor?
+                    if team_data.loc[i, 'SAISON'] != team_data.loc[i-1, 'SAISON']:
+                        saison_name = team_data.loc[i, 'SAISON']
+                        
+                        # Strich zeichnen genau zwischen den Balken (i - 0.5)
+                        fig_z.add_vline(
+                            x=i - 0.5,  
+                            line_width=2, 
+                            line_dash="dash", 
+                            line_color="gray",
+                            annotation_text=saison_name,
+                            annotation_position="top right"
+                        )
+    
+                # x-Achse noch hübsch drehen
                 fig_z.update_xaxes(tickangle=-45, title_text=None)
-
-                st.plotly_chart(
-                    fig_z, 
-                    use_container_width=True, 
-                    config={'staticPlot': True}
-                )
+    
+                st.plotly_chart(fig_z, use_container_width=True, config={'staticPlot': True})
+                    
+                    fig_z.update_traces(textposition='outside')
+    
+                    # Die Saison-Linien (add_vline) müssen wir hier weglassen, 
+                    # da sie auf diesem Diagramm-Typ nicht mehr richtig funktionieren.
+    
+                    # --- X-ACHSE FORMATIEREN ---
+                    # Nur noch das Drehen der Schrift ist nötig
+                    fig_z.update_xaxes(tickangle=-45, title_text=None)
+    
+                    st.plotly_chart(
+                        fig_z, 
+                        use_container_width=True, 
+                        config={'staticPlot': True}
+                    )
                 
                 # Werte auf den Balken anzeigen
                 fig_z.update_traces(textposition='outside')
@@ -331,6 +374,7 @@ with tab_zuschauer:
             st.error("Spalte 'HEIM' fehlt im Sheet.")
     else:
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
