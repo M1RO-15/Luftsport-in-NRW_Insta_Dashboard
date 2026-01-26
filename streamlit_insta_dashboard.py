@@ -115,7 +115,7 @@ with tab_insta:
         
         row2_col1, row2_col2 = st.columns(2, gap="medium")
         with row2_col1:
-            st.subheader("📈 Wachstumstrends (4 Wochen)")
+            st.subheader("📈 Wachstumstrends")
             latest_date_global = df_insta['DATE'].max()
             target_date_4w = latest_date_global - timedelta(weeks=4)
             available_dates = sorted(df_insta['DATE'].unique())
@@ -129,14 +129,14 @@ with tab_insta:
             df_trend['CLUB_NAME_SHORT'] = df_trend['CLUB_NAME'].apply(lambda x: x[:20] + '...' if len(x) > 20 else x)
 
             # Top 10 Gewinner
-            fig_win = px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="🚀 Top 10 Gewinner", color_discrete_sequence=['#00CC96'], text='Zuwachs')
+            fig_win = px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
             fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None)
             # Text weiß, 90 Grad gedreht, links im Balken
             fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
             st.plotly_chart(fig_win, use_container_width=True, config={'staticPlot': True})
 
             # Geringstes Wachstum
-            fig_loss = px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="📉 Geringstes Wachstum", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
+            fig_loss = px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
             fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None)
             # Text weiß, 90 Grad gedreht, links im Balken
             fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=-0)
@@ -248,6 +248,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
