@@ -187,39 +187,51 @@ with tab_zuschauer:
                 cols = ["DATUM", 'SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']
                 df_helper = df_z[[c for c in cols if c in df_z.columns]].copy()
                 
-                # 7. Deduplizieren und 3. Chronologisch sortieren (wichtig für die richtige Reihenfolge!)
+                # 7. Deduplizieren & 3. Chronologisch sortieren
                 df_helper = df_helper.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values('DATUM')
                 
                 if not df_helper.empty:
-                    # 1. Balkendiagramm statt Linie
-                    # 6. Werte (text) über den Balken
-                    # 8. Nur Gelb und Blau als Farben
-                    fig_trend = px.bar(
-                        df_helper, 
-                        x='DATUM', # Wir nutzen Datum für die X-Achse, damit die Reihenfolge stimmt
-                        y='AVERAGE_SPIELTAG', 
-                        color='SAISON', 
-                        text='AVERAGE_SPIELTAG', 
-                        title="Zuschauerschnitt im Saisonvergleich (nach Spieltag)",
-                        color_discrete_sequence=['#FFD700', '#0057B8'] # Gelb und Blau
+                    # Farben festlegen: Gelb & Blau für Saisons, Weiß für das Finale
+                    unique_saisons = df_helper['SAISON'].unique()
+                    color_cycle = ['#FFD700', '#0057B8'] # Gelb und Blau
+                    saison_map = {s: color_cycle[i % 2] for i, s in enumerate(unique_saisons)}
+                    
+                    # Hilfsspalte für die individuelle Balkenfarbe
+                    df_helper['BAR_COLOR'] = df_helper.apply(
+                        lambda x: 'white' if str(x['SPIELTAG']).strip().lower() == 'finale' 
+                        else saison_map.get(x['SAISON']), axis=1
                     )
                 
+                    # 1. Balkendiagramm erstellen
+                    fig_trend = px.bar(
+                        df_helper, 
+                        x='DATUM', 
+                        y='AVERAGE_SPIELTAG', 
+                        color='SAISON', 
+                        text='AVERAGE_SPIELTAG',
+                        color_discrete_map=saison_map,
+                        title="Zuschauerschnitt im Saisonvergleich"
+                    )
+                
+                    # 8. Finale weiß färben (überschreibt Saisonfarbe für diesen einen Balken)
+                    for trace in fig_trend.data:
+                        mask = df_helper['SAISON'] == trace.name
+                        trace.marker.color = df_helper[mask]['BAR_COLOR'].tolist()
+                
                     fig_trend.update_layout(
-                        # 2. Keine Achsentitel
-                        xaxis_title=None,
+                        xaxis_title=None, # 2. Keine Titel
                         yaxis_title=None,
-                        # 5. Achse als "Kategorie" -> macht alle Abstände gleich groß
                         xaxis=dict(
-                            type='category', 
+                            type='category',   # 5. Gleicher Abstand zwischen Balken
                             tickmode='array',
-                            tickvals=df_helper['DATUM'],   # Die echten Positionen (Datum)
-                            ticktext=df_helper['SPIELTAG'], # 4. Was angezeigt wird (Spieltag)
-                            tickangle=-45  # Dreht die Beschriftung um 45 Grad
+                            tickvals=df_helper['DATUM'],
+                            ticktext=df_helper['SPIELTAG'], # 4. Spieltage als Ticks
+                            tickangle=-45      # 45 Grad Winkel
                         ),
                         hovermode="x unified"
                     )
                     
-                    # 6. Beschriftung nach außen setzen
+                    # 6. Beschriftung über den Balken
                     fig_trend.update_traces(textposition='outside')
                 
                     st.plotly_chart(fig_trend, use_container_width=True)
@@ -278,6 +290,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
