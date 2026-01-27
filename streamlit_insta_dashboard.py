@@ -184,7 +184,7 @@ with tab_zuschauer:
 
             if "Liga-Gesamtentwicklung" in auswahl:
                 st.subheader("📈 Durchschnittliche Zuschauer pro Spieltag")
-                cols = ['SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']
+                cols = ["DATUM", 'SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']
                 df_helper = df_z[[c for c in cols if c in df_z.columns]].copy()
                 df_helper = df_helper.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values(['SAISON', 'SPIELTAG'])
 
@@ -248,6 +248,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
