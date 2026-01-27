@@ -222,9 +222,7 @@ with tab_zuschauer:
                     fig_trend.update_traces(textposition='outside')
                 
                     st.plotly_chart(fig_trend, use_container_width=True)
-                    
-                    with st.expander("Datenquelle der Grafik anzeigen"):
-                        st.dataframe(df_helper, hide_index=True, use_container_width=True)
+
                 else:
                     st.warning("Die erforderlichen Spalten (SAISON, SPIELTAG, AVERAGE_SPIELTAG) fehlen im Datensatz.")
 
@@ -279,6 +277,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
