@@ -216,7 +216,7 @@ with tab_zuschauer:
                         yaxis_title=None,
                         xaxis=dict(
                             tickfont=dict(size=10),
-                            type='category' # Macht die Abstände schön gleichmäßig
+                            type='category', # Macht die Abstände schön gleichmäßig
                             range = [0,350]
                         ),
                         hovermode="x unified"
@@ -325,6 +325,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
