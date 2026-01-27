@@ -200,7 +200,8 @@ with tab_zuschauer:
                         x='SAISON', 
                         y='ZUSCHAUER',
                         text='ZUSCHAUER',
-                        title="Saisonschnitt (Alle Spiele)"
+                        title="Saisonschnitt (Alle Spiele)",
+                        range = [0,300]
                     )
                 
                     # Farben setzen und Text nach oben schieben
@@ -324,6 +325,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
