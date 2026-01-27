@@ -189,6 +189,11 @@ with tab_zuschauer:
                 
                 # 7. Deduplizieren und 3. Chronologisch sortieren (wichtig für die richtige Reihenfolge!)
                 df_helper = df_helper.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values('DATUM')
+
+                # NEU: Wenn ein Datum doppelt ist, ziehen wir beim zweiten -1 Tag ab
+                df_helper['DATUM'] = pd.to_datetime(df_helper['DATUM'])
+                ist_doppelt = df_helper.duplicated(subset=['DATUM'], keep='first')
+                df_helper.loc[ist_doppelt, 'DATUM'] = df_helper.loc[ist_doppelt, 'DATUM'] - pd.Timedelta(days=1)
                 
                 if not df_helper.empty:
                     # 1. Balkendiagramm statt Linie
@@ -278,6 +283,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
