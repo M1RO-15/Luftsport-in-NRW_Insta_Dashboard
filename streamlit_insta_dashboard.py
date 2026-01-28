@@ -276,7 +276,7 @@ with tab_zuschauer:
             else:
                  # 1. Daten für das Team vorbereiten
                     team_data = df_z[df_z['HEIM'] == auswahl].sort_values('DATUM')
-                    st.subheader(f"Entwicklung: {auswahl}")
+                    st.markdown(f"### Entwicklung: {auswahl}")
                     
                     # --- NEU: DURCHSCHNITT JE SAISON ALS BALKEN ---
                     # Wir rechnen aus, wie viele Fans im Schnitt pro Jahr da waren
@@ -324,6 +324,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
