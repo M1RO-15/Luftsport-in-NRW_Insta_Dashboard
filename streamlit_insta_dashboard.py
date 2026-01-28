@@ -179,7 +179,7 @@ with tab_zuschauer:
 
         if 'HEIM' in df_z.columns:
             options_list = ["🇩🇪 Liga-Gesamtentwicklung (Spieltag-Schnitt)"] + sorted(df_z['HEIM'].unique())
-            auswahl = st.selectbox("## Wähle einen Verein aus:", options_list)
+            auswahl = st.selectbox("## Wähle einen Verein aus:", options_list, key="vereins_auswahl")
 
             if "Liga-Gesamtentwicklung" in auswahl:
                 #Hier die Saisons mit Durchschnitten
@@ -324,6 +324,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
