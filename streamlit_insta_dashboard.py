@@ -82,6 +82,40 @@ with tab_insta:
         df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
         df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
         
+        # --- TEIL 1: WACHSTUMSTRENDS (JETZT OBEN) ---
+        # Berechnung der Trends hierhin verschoben, damit wir sie zuerst anzeigen können
+        latest_date_global = df_insta['DATE'].max()
+        target_date_4w = latest_date_global - timedelta(weeks=4)
+        available_dates = sorted(df_insta['DATE'].unique())
+        closest_old_date = min(available_dates, key=lambda x: x if x <= target_date_4w else available_dates[0])
+        
+        df_then = df_insta[df_insta['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
+        df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
+        df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
+        
+        # Namen auf 20 Zeichen kürzen
+        df_trend['CLUB_NAME_SHORT'] = df_trend['CLUB_NAME'].apply(lambda x: x[:20] + '...' if len(x) > 20 else x)
+
+        # Neue Spaltenstruktur für Top Gewinner (Links) und Geringstes Wachstum (Rechts)
+        top_row_col1, top_row_col2 = st.columns(2, gap="medium")
+
+        with top_row_col1:
+            # Top 10 Gewinner
+            fig_win = px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
+            fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None)
+            fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
+            st.plotly_chart(fig_win, use_container_width=True, config={'staticPlot': True})
+
+        with top_row_col2:
+            # Geringstes Wachstum
+            fig_loss = px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
+            fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None)
+            fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=-0)
+            st.plotly_chart(fig_loss, use_container_width=True, config={'staticPlot': True})
+
+        st.divider()
+
+        # --- TEIL 2: TABELLEN & DETAILANALYSE ---
         row1_col1, row1_col2 = st.columns(2, gap="medium")
         h_tables = 2150
         
@@ -114,41 +148,12 @@ with tab_insta:
         
         st.divider()
         
-        row2_col1, row2_col2 = st.columns(2, gap="medium")
-        with row2_col1:
-            st.subheader("📈 Wachstumstrends")
-            latest_date_global = df_insta['DATE'].max()
-            target_date_4w = latest_date_global - timedelta(weeks=4)
-            available_dates = sorted(df_insta['DATE'].unique())
-            closest_old_date = min(available_dates, key=lambda x: x if x <= target_date_4w else available_dates[0])
-            
-            df_then = df_insta[df_insta['DATE'] == closest_old_date][['CLUB_NAME', 'FOLLOWER']]
-            df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
-            df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
-            
-            # Namen auf 20 Zeichen kürzen
-            df_trend['CLUB_NAME_SHORT'] = df_trend['CLUB_NAME'].apply(lambda x: x[:20] + '...' if len(x) > 20 else x)
+        # --- TEIL 3: GESAMTENTWICKLUNG (Jetzt unten) ---
+        st.subheader("🌐 Gesamtentwicklung Deutschland")
+        st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
+        fig_total = px.line(df_insta.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d')
+        st.plotly_chart(fig_total, use_container_width=True, config={'staticPlot': True})
 
-            # Top 10 Gewinner
-            fig_win = px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
-            fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None)
-            # Text weiß, 90 Grad gedreht, links im Balken
-            fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
-            st.plotly_chart(fig_win, use_container_width=True, config={'staticPlot': True})
-
-            # Geringstes Wachstum
-            fig_loss = px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
-            fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None)
-            # Text weiß, 90 Grad gedreht, links im Balken
-            fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=-0)
-            st.plotly_chart(fig_loss, use_container_width=True, config={'staticPlot': True})
-            
-        with row2_col2:
-            st.subheader("🌐 Gesamtentwicklung Deutschland")
-            st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
-            fig_total = px.line(df_insta.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d')
-            # Als fixes Bild anzeigen
-            st.plotly_chart(fig_total, use_container_width=True, config={'staticPlot': True})
     else: 
         st.error("Instagram-Daten konnten nicht geladen werden.")
 
@@ -309,8 +314,8 @@ with tab_zuschauer:
                     
                     # Das Bild für jedes einzelne Spiel malen
                     fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', 
-                                     color='SAISON', color_discrete_map=color_map, 
-                                     title=f"Alle Heimspiele von {auswahl}")
+                                      color='SAISON', color_discrete_map=color_map, 
+                                      title=f"Alle Heimspiele von {auswahl}")
                     
                     # Das Aussehen verschönern (Zahlen oben, Schrift schräg)
                     fig_team.update_traces(textposition='outside')
@@ -325,37 +330,3 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
