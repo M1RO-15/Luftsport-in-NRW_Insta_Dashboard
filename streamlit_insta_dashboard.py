@@ -114,9 +114,8 @@ with tab_insta:
 
         top_row_col1, top_row_col2 = st.columns(2, gap="medium")
 
-        # --- FIX: ROBUSTE AUSWERTUNG DES KLICKS ---
+        # --- FUNKTION: ROBUSTE AUSWERTUNG DES KLICKS ---
         def handle_chart_selection(event_data):
-            # Wir prüfen sicherheitshalber auf Attribut-Zugriff ODER Dictionary-Zugriff
             if not event_data:
                 return False
             
@@ -124,19 +123,20 @@ with tab_insta:
                 # Versuch 1: Normaler Streamlit Objekt-Zugriff
                 points = event_data.selection.points
             except AttributeError:
-                # Versuch 2: Falls es ein Dictionary ist (passiert manchmal)
+                # Versuch 2: Falls es ein Dictionary ist
                 try:
                     points = event_data["selection"]["points"]
                 except (KeyError, TypeError):
                     return False
             
             if points:
-                # Der Punkt selbst ist meistens ein Dict -> Zugriff mit ["key"]
                 first_point = points[0]
                 if "customdata" in first_point:
                     selected_name = first_point["customdata"][0]
-                    st.session_state.selected_club_from_chart = selected_name
-                    return True
+                    # Nur aktualisieren, wenn es ein neuer Verein ist
+                    if st.session_state.selected_club_from_chart != selected_name:
+                        st.session_state.selected_club_from_chart = selected_name
+                        return True
             return False
 
         with top_row_col1:
@@ -190,19 +190,30 @@ with tab_insta:
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
             
-            display_data = df_latest_display
-            
+            # Hinweis anzeigen
             if st.session_state.selected_club_from_chart:
-                st.info(f"🔎 Gefiltert nach: **{st.session_state.selected_club_from_chart}**")
-                display_data = df_latest_display[df_latest_display['CLUB_NAME'] == st.session_state.selected_club_from_chart]
-                if st.button("🔄 Alle anzeigen"):
+                st.info(f"👉 Markiert: **{st.session_state.selected_club_from_chart}** (Scrollen Sie in der Liste, falls nicht sichtbar)")
+                if st.button("Markierung aufheben"):
                     st.session_state.selected_club_from_chart = None
                     st.rerun()
             else:
                 st.markdown("👇 :yellow[Hier Vereine für Detailanalyse selektieren]")
 
+            # Styling Funktion: Färbt die Zeile gelb, wenn sie dem Chart-Klick entspricht
+            def highlight_selected_row(row):
+                color = ''
+                if st.session_state.selected_club_from_chart and row['CLUB_NAME'] == st.session_state.selected_club_from_chart:
+                    color = 'background-color: #ffeeba; color: black; font-weight: bold' # Helles Gelb
+                return [color] * len(row)
+
+            # Daten vorbereiten (nur Spalten, die wir anzeigen wollen)
+            df_view = df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']]
+            
+            # Styling anwenden
+            styled_df = df_view.style.apply(highlight_selected_row, axis=1)
+
             selection = st.dataframe(
-                display_data[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
+                styled_df, 
                 column_config={
                     "RANG": st.column_config.TextColumn("Rang"),
                     "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
@@ -213,7 +224,7 @@ with tab_insta:
                 on_select="rerun",
                 selection_mode="multi-row",
                 use_container_width=True,
-                height=h_tables if st.session_state.selected_club_from_chart is None else 150
+                height=h_tables
             )
             
         with row1_col2:
@@ -221,10 +232,14 @@ with tab_insta:
             
             sel_clubs = []
             
+            # 1. Manuelle Auswahl aus Tabelle
             if selection and selection.selection.rows:
-                sel_clubs = display_data.iloc[selection.selection.rows]['CLUB_NAME'].tolist()
-            elif st.session_state.selected_club_from_chart:
-                 sel_clubs = [st.session_state.selected_club_from_chart]
+                sel_clubs = df_latest_display.iloc[selection.selection.rows]['CLUB_NAME'].tolist()
+            
+            # 2. Automatische Auswahl durch Chart-Klick (hinzufügen, falls nicht schon da)
+            if st.session_state.selected_club_from_chart:
+                 if st.session_state.selected_club_from_chart not in sel_clubs:
+                     sel_clubs.append(st.session_state.selected_club_from_chart)
 
             if sel_clubs:
                 plot_data = df_insta[df_insta['CLUB_NAME'].isin(sel_clubs)].sort_values(['CLUB_NAME', 'DATE'])
