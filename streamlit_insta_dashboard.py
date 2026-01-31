@@ -114,18 +114,33 @@ with tab_insta:
 
         top_row_col1, top_row_col2 = st.columns(2, gap="medium")
 
-        # Funktion zum Verarbeiten des Klicks
+        # --- FIX: ROBUSTE AUSWERTUNG DES KLICKS ---
         def handle_chart_selection(event_data):
-            if event_data and event_data.selection and event_data.selection.points:
-                # Wir holen den vollen Namen aus den Custom Data (Index 0)
-                selected_name = event_data.selection.points[0].customdata[0]
-                st.session_state.selected_club_from_chart = selected_name
-                return True
+            # Wir prüfen sicherheitshalber auf Attribut-Zugriff ODER Dictionary-Zugriff
+            if not event_data:
+                return False
+            
+            try:
+                # Versuch 1: Normaler Streamlit Objekt-Zugriff
+                points = event_data.selection.points
+            except AttributeError:
+                # Versuch 2: Falls es ein Dictionary ist (passiert manchmal)
+                try:
+                    points = event_data["selection"]["points"]
+                except (KeyError, TypeError):
+                    return False
+            
+            if points:
+                # Der Punkt selbst ist meistens ein Dict -> Zugriff mit ["key"]
+                first_point = points[0]
+                if "customdata" in first_point:
+                    selected_name = first_point["customdata"][0]
+                    st.session_state.selected_club_from_chart = selected_name
+                    return True
             return False
 
         with top_row_col1:
             # Top 10 Gewinner
-            # WICHTIG: Wir geben den VOLLEN Namen in custom_data mit, damit wir ihn beim Klick auslesen können
             fig_win = px.bar(
                 df_trend.sort_values(by='Zuwachs', ascending=False).head(10), 
                 x='Zuwachs', y='CLUB_NAME_SHORT', 
@@ -133,7 +148,7 @@ with tab_insta:
                 title="🚀 Top 10 Gewinner (Klickbar)", 
                 color_discrete_sequence=['#00CC96'], 
                 text='Zuwachs',
-                custom_data=['CLUB_NAME'] # <--- Voller Name für Klick-Logik
+                custom_data=['CLUB_NAME'] 
             )
             fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None, clickmode='event+select')
             fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
@@ -141,7 +156,6 @@ with tab_insta:
             # Event Listener
             event_win = st.plotly_chart(fig_win, use_container_width=True, on_select="rerun", selection_mode="points", key="chart_win")
             if handle_chart_selection(event_win):
-                # Trigger Javascript Scroll
                 scroll_to_anchor()
 
         with top_row_col2:
@@ -153,7 +167,7 @@ with tab_insta:
                 title="📉 Geringstes Wachstum (Klickbar)", 
                 color_discrete_sequence=['#FF4B4B'], 
                 text='Zuwachs',
-                custom_data=['CLUB_NAME'] # <--- Voller Name für Klick-Logik
+                custom_data=['CLUB_NAME'] 
             )
             fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None, clickmode='event+select')
             fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=-0)
@@ -167,7 +181,7 @@ with tab_insta:
 
         # --- TEIL 2: TABELLEN & DETAILANALYSE ---
         
-        # 1. ANCHOR SETZEN (Hier springt die Seite hin)
+        # 1. ANCHOR SETZEN
         st.markdown("<div id='ranking_anchor'></div>", unsafe_allow_html=True)
         
         row1_col1, row1_col2 = st.columns(2, gap="medium")
@@ -176,15 +190,11 @@ with tab_insta:
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
             
-            # LOGIK: Wenn ein Verein oben geklickt wurde, filtern wir die Tabelle
             display_data = df_latest_display
-            pre_selected_rows = []
-
+            
             if st.session_state.selected_club_from_chart:
                 st.info(f"🔎 Gefiltert nach: **{st.session_state.selected_club_from_chart}**")
-                # Filter aktivieren
                 display_data = df_latest_display[df_latest_display['CLUB_NAME'] == st.session_state.selected_club_from_chart]
-                # Reset Button
                 if st.button("🔄 Alle anzeigen"):
                     st.session_state.selected_club_from_chart = None
                     st.rerun()
@@ -203,23 +213,16 @@ with tab_insta:
                 on_select="rerun",
                 selection_mode="multi-row",
                 use_container_width=True,
-                height=h_tables if st.session_state.selected_club_from_chart is None else 150 # Kleinere Höhe wenn gefiltert
+                height=h_tables if st.session_state.selected_club_from_chart is None else 150
             )
             
         with row1_col2:
             st.subheader("🔍 Detailanalyse")
             
-            # Logik für Detailanalyse
-            # 1. Priorität: Auswahl aus der Tabelle
-            # 2. Priorität: Auswahl aus dem Chart oben
-            
             sel_clubs = []
             
-            # Hat der Nutzer in die Tabelle geklickt?
             if selection and selection.selection.rows:
                 sel_clubs = display_data.iloc[selection.selection.rows]['CLUB_NAME'].tolist()
-            
-            # Oder kommt er vom Chart oben?
             elif st.session_state.selected_club_from_chart:
                  sel_clubs = [st.session_state.selected_club_from_chart]
 
