@@ -4,6 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import plotly.express as px
 from datetime import datetime, timedelta
+import streamlit.components.v1 as components
 
 # --- Konfiguration ---
 INSTA_SHEET_ID = "1_Ni1ALTrq3qkgXxgBaG2TNjRBodCEaYewhhTPq0aWfU"
@@ -24,6 +25,18 @@ st.markdown("""
     .stSelectbox label p { font-size: 18px !important; color: #0047AB !important; font-weight: 800 !important; margin-bottom: 5px; }
 </style>
 """, unsafe_allow_html=True)
+
+# --- JAVASCRIPT SCROLL FUNKTION ---
+def scroll_to_anchor():
+    js = """
+    <script>
+        var element = document.getElementById('ranking_anchor');
+        if (element) {
+            element.scrollIntoView({behavior: "smooth", block: "start"});
+        }
+    </script>
+    """
+    components.html(js, height=0)
 
 # --- DATEN LADEN FUNKTION ---
 @st.cache_data(ttl=3600)
@@ -82,8 +95,7 @@ with tab_insta:
         df_latest_display['FOLLOWER'] = df_latest_display['FOLLOWER'].apply(lambda x: f"{int(x):,}".replace(",", "."))
         df_latest_display['STAND'] = df_latest_display['DATE'].apply(lambda x: x.strftime('%d.%m.%Y'))
         
-        # --- TEIL 1: WACHSTUMSTRENDS (JETZT OBEN) ---
-        # Berechnung der Trends hierhin verschoben, damit wir sie zuerst anzeigen können
+        # --- TEIL 1: WACHSTUMSTRENDS ---
         latest_date_global = df_insta['DATE'].max()
         target_date_4w = latest_date_global - timedelta(weeks=4)
         available_dates = sorted(df_insta['DATE'].unique())
@@ -93,37 +105,94 @@ with tab_insta:
         df_trend = pd.merge(df_latest[['CLUB_NAME', 'FOLLOWER']], df_then, on='CLUB_NAME', suffixes=('_neu', '_alt'))
         df_trend['Zuwachs'] = df_trend['FOLLOWER_neu'] - df_trend['FOLLOWER_alt']
         
-        # Namen auf 20 Zeichen kürzen
+        # Namen kürzen
         df_trend['CLUB_NAME_SHORT'] = df_trend['CLUB_NAME'].apply(lambda x: x[:20] + '...' if len(x) > 20 else x)
 
-        # Neue Spaltenstruktur für Top Gewinner (Links) und Geringstes Wachstum (Rechts)
+        # STATE INITIALISIERUNG FÜR KLICK-EVENT
+        if 'selected_club_from_chart' not in st.session_state:
+            st.session_state.selected_club_from_chart = None
+
         top_row_col1, top_row_col2 = st.columns(2, gap="medium")
+
+        # Funktion zum Verarbeiten des Klicks
+        def handle_chart_selection(event_data):
+            if event_data and event_data.selection and event_data.selection.points:
+                # Wir holen den vollen Namen aus den Custom Data (Index 0)
+                selected_name = event_data.selection.points[0].customdata[0]
+                st.session_state.selected_club_from_chart = selected_name
+                return True
+            return False
 
         with top_row_col1:
             # Top 10 Gewinner
-            fig_win = px.bar(df_trend.sort_values(by='Zuwachs', ascending=False).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="🚀 Top 10 Gewinner (seit dem 15.01.2026)", color_discrete_sequence=['#00CC96'], text='Zuwachs')
-            fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None)
+            # WICHTIG: Wir geben den VOLLEN Namen in custom_data mit, damit wir ihn beim Klick auslesen können
+            fig_win = px.bar(
+                df_trend.sort_values(by='Zuwachs', ascending=False).head(10), 
+                x='Zuwachs', y='CLUB_NAME_SHORT', 
+                orientation='h', 
+                title="🚀 Top 10 Gewinner (Klickbar)", 
+                color_discrete_sequence=['#00CC96'], 
+                text='Zuwachs',
+                custom_data=['CLUB_NAME'] # <--- Voller Name für Klick-Logik
+            )
+            fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None, clickmode='event+select')
             fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
-            st.plotly_chart(fig_win, use_container_width=True, config={'staticPlot': True})
+            
+            # Event Listener
+            event_win = st.plotly_chart(fig_win, use_container_width=True, on_select="rerun", selection_mode="points", key="chart_win")
+            if handle_chart_selection(event_win):
+                # Trigger Javascript Scroll
+                scroll_to_anchor()
 
         with top_row_col2:
             # Geringstes Wachstum
-            fig_loss = px.bar(df_trend.sort_values(by='Zuwachs', ascending=True).head(10), x='Zuwachs', y='CLUB_NAME_SHORT', orientation='h', title="📉 Geringstes Wachstum (seit dem 15.01.2026)", color_discrete_sequence=['#FF4B4B'], text='Zuwachs')
-            fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None)
+            fig_loss = px.bar(
+                df_trend.sort_values(by='Zuwachs', ascending=True).head(10), 
+                x='Zuwachs', y='CLUB_NAME_SHORT', 
+                orientation='h', 
+                title="📉 Geringstes Wachstum (Klickbar)", 
+                color_discrete_sequence=['#FF4B4B'], 
+                text='Zuwachs',
+                custom_data=['CLUB_NAME'] # <--- Voller Name für Klick-Logik
+            )
+            fig_loss.update_layout(yaxis={'categoryorder':'total descending'}, yaxis_title=None, clickmode='event+select')
             fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=-0)
-            st.plotly_chart(fig_loss, use_container_width=True, config={'staticPlot': True})
+            
+            # Event Listener
+            event_loss = st.plotly_chart(fig_loss, use_container_width=True, on_select="rerun", selection_mode="points", key="chart_loss")
+            if handle_chart_selection(event_loss):
+                scroll_to_anchor()
 
         st.divider()
 
         # --- TEIL 2: TABELLEN & DETAILANALYSE ---
+        
+        # 1. ANCHOR SETZEN (Hier springt die Seite hin)
+        st.markdown("<div id='ranking_anchor'></div>", unsafe_allow_html=True)
+        
         row1_col1, row1_col2 = st.columns(2, gap="medium")
         h_tables = 2150
         
         with row1_col1:
             st.subheader("🏆 Aktuelles Ranking")
-            st.markdown("👇 :yellow[Hier Vereine für Detailanalyse selektieren]")
+            
+            # LOGIK: Wenn ein Verein oben geklickt wurde, filtern wir die Tabelle
+            display_data = df_latest_display
+            pre_selected_rows = []
+
+            if st.session_state.selected_club_from_chart:
+                st.info(f"🔎 Gefiltert nach: **{st.session_state.selected_club_from_chart}**")
+                # Filter aktivieren
+                display_data = df_latest_display[df_latest_display['CLUB_NAME'] == st.session_state.selected_club_from_chart]
+                # Reset Button
+                if st.button("🔄 Alle anzeigen"):
+                    st.session_state.selected_club_from_chart = None
+                    st.rerun()
+            else:
+                st.markdown("👇 :yellow[Hier Vereine für Detailanalyse selektieren]")
+
             selection = st.dataframe(
-                df_latest_display[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
+                display_data[['RANG', 'CLUB_NAME', 'URL', 'FOLLOWER', 'STAND']], 
                 column_config={
                     "RANG": st.column_config.TextColumn("Rang"),
                     "URL": st.column_config.LinkColumn("Instagram", display_text=r"https://www.instagram.com/([^/?#]+)"),
@@ -134,22 +203,36 @@ with tab_insta:
                 on_select="rerun",
                 selection_mode="multi-row",
                 use_container_width=True,
-                height=h_tables
+                height=h_tables if st.session_state.selected_club_from_chart is None else 150 # Kleinere Höhe wenn gefiltert
             )
             
         with row1_col2:
             st.subheader("🔍 Detailanalyse")
+            
+            # Logik für Detailanalyse
+            # 1. Priorität: Auswahl aus der Tabelle
+            # 2. Priorität: Auswahl aus dem Chart oben
+            
+            sel_clubs = []
+            
+            # Hat der Nutzer in die Tabelle geklickt?
             if selection and selection.selection.rows:
-                sel_clubs = df_latest.iloc[selection.selection.rows]['CLUB_NAME'].tolist()
+                sel_clubs = display_data.iloc[selection.selection.rows]['CLUB_NAME'].tolist()
+            
+            # Oder kommt er vom Chart oben?
+            elif st.session_state.selected_club_from_chart:
+                 sel_clubs = [st.session_state.selected_club_from_chart]
+
+            if sel_clubs:
                 plot_data = df_insta[df_insta['CLUB_NAME'].isin(sel_clubs)].sort_values(['CLUB_NAME', 'DATE'])
                 fig_detail = px.line(plot_data, x='DATE', y='FOLLOWER', color='CLUB_NAME', title="Vergleich der Vereine", markers=True)
                 st.plotly_chart(fig_detail, use_container_width=True)
             else: 
-                st.info("💡 Klicke links in der Tabelle auf Zeilen, um den Verlauf zu vergleichen.")
+                st.info("💡 Klicke links in der Tabelle auf Zeilen oder oben auf das Diagramm, um den Verlauf zu sehen.")
         
         st.divider()
         
-        # --- TEIL 3: GESAMTENTWICKLUNG (Jetzt unten) ---
+        # --- TEIL 3: GESAMTENTWICKLUNG ---
         st.subheader("🌐 Gesamtentwicklung Deutschland")
         st.markdown(f"##### Deutschland gesamt: :yellow[**{summe_follower}**]")
         fig_total = px.line(df_insta.groupby('DATE')['FOLLOWER'].sum().reset_index(), x='DATE', y='FOLLOWER', title="Summe aller Follower", markers=True, color_discrete_sequence=['#FFB200']).update_yaxes(tickformat=',d')
@@ -189,14 +272,9 @@ with tab_zuschauer:
             auswahl = st.selectbox("## Wähle einen Verein aus:", options_list, key="vereins_auswahl")
 
             if "Liga-Gesamtentwicklung" in auswahl:
-                #Hier die Saisons mit Durchschnitten
-
-                # Wir nehmen die ganze Tabelle (df_z) VOR dem Aussortieren
-                # und rechnen den Durchschnitt (mean) für jede Saison aus.
                 df_saison = df_z.groupby('SAISON')['ZUSCHAUER'].mean().reset_index()
                 
                 if not df_saison.empty:
-                    # Wir verteilen abwechselnd Gelb und Blau
                     farben_liste = ['#FFD700', '#0057B8'] 
                     df_saison['COLOR'] = [farben_liste[i % 2] for i in range(len(df_saison))]
                 
@@ -207,73 +285,59 @@ with tab_zuschauer:
                         text='ZUSCHAUER',
                         title="Saisonschnitt Bundesliga gesamt",
                     )
-                
-                    # Farben setzen und Text nach oben schieben
                     fig_saison.update_traces(
                         marker_color=df_saison['COLOR'], 
                         textposition='outside',
-                        texttemplate='%{text:.0f}' # Zeigt runde Zahlen ohne Komma
+                        texttemplate='%{text:.0f}' 
                     )
-                
-                    # Das gleiche hübsche Layout wie unten
                     fig_saison.update_layout(
                         xaxis_title=None,
                         yaxis_title=None,
                         xaxis=dict(
                             tickfont=dict(size=10),
-                            type='category' # Macht die Abstände schön gleichmäßig
+                            type='category' 
                         ),
                         yaxis=dict(
                             range = [0,350]
                         ),
                         hovermode="x unified"
                     )
-                
                     st.plotly_chart(fig_saison, use_container_width=True)
 
-                # Hier alle Spieltage mit Durchschnitt
                 cols = ["DATUM", 'SAISON', 'SPIELTAG', 'AVERAGE_SPIELTAG']
                 df_helper = df_z[[c for c in cols if c in df_z.columns]].copy()
                 
-                # 7. Deduplizieren und 3. Chronologisch sortieren (wichtig für die richtige Reihenfolge!)
                 df_helper = df_helper.drop_duplicates(subset=['SAISON', 'SPIELTAG']).sort_values('DATUM')
 
-                # NEU: Wenn ein Datum doppelt ist, ziehen wir beim zweiten -1 Tag ab
                 df_helper['DATUM'] = pd.to_datetime(df_helper['DATUM'])
                 ist_doppelt = df_helper.duplicated(subset=['DATUM'], keep='first')
                 df_helper.loc[ist_doppelt, 'DATUM'] = df_helper.loc[ist_doppelt, 'DATUM'] - pd.Timedelta(days=1)
                 
                 if not df_helper.empty:
-                    # 1. Balkendiagramm statt Linie
-                    # 6. Werte (text) über den Balken
-                    # 8. Nur Gelb und Blau als Farben
                     fig_trend = px.bar(
                         df_helper, 
-                        x='DATUM', # Wir nutzen Datum für die X-Achse, damit die Reihenfolge stimmt
+                        x='DATUM', 
                         y='AVERAGE_SPIELTAG', 
                         color='SAISON', 
                         text='AVERAGE_SPIELTAG', 
                         title="Zuschauerschnitt im Saisonvergleich (nach Spieltag)",
-                        color_discrete_sequence=['#FFD700', '#0057B8'] # Gelb und Blau
+                        color_discrete_sequence=['#FFD700', '#0057B8']
                     )
                 
                     fig_trend.update_layout(
-                        # 2. Keine Achsentitel
                         xaxis_title=None,
                         yaxis_title=None,
-                        # 5. Achse als "Kategorie" -> macht alle Abstände gleich groß
                         xaxis=dict(
                             type='category', 
                             tickmode='array',
-                            tickvals=df_helper['DATUM'],   # Die echten Positionen (Datum)
+                            tickvals=df_helper['DATUM'], 
                             ticktext=df_helper['SPIELTAG'],
                             tickangle=-45,
-                            tickfont=dict(size=10)# 4. Was angezeigt wird (Spieltag)
+                            tickfont=dict(size=10)
                         ),
                         hovermode="x unified"
                     )
                     
-                    # 6. Beschriftung nach außen setzen
                     fig_trend.update_traces(textposition='outside')
                     st.plotly_chart(fig_trend, use_container_width=True)
                     
@@ -281,23 +345,18 @@ with tab_zuschauer:
                     st.warning("Die erforderlichen Spalten (SAISON, SPIELTAG, AVERAGE_SPIELTAG) fehlen im Datensatz.")
 
             else:
-                 # 1. Daten für das Team vorbereiten
                     team_data = df_z[df_z['HEIM'] == auswahl].sort_values('DATUM')
                     st.markdown(f"### Entwicklung: {auswahl}")
                     
-                    # --- NEU: DURCHSCHNITT JE SAISON ALS BALKEN ---
-                    # Wir rechnen aus, wie viele Fans im Schnitt pro Jahr da waren
                     stats_saison = team_data.groupby('SAISON')['ZUSCHAUER'].mean().reset_index()
                     stats_saison.columns = ['Saison', 'Ø Zuschauer']
                     stats_saison['Ø Zuschauer'] = stats_saison['Ø Zuschauer'].round(0).astype(int)
                     
-                    # Das Bild für die Jahres-Durchschnitte malen
                     fig_avg = px.bar(stats_saison, x='Saison', y='Ø Zuschauer', text='Ø Zuschauer', 
                                      title=f"Durchschnittliche Zuschauer pro Saison",
                                      color='Saison', color_discrete_map=color_map)
                     fig_avg.update_traces(textposition='outside')
                     fig_avg.update_layout(
-                        # Fixiert die Achsen (verhindert Zoom und Pan per Maus)
                         xaxis=dict(fixedrange=True),
                         yaxis=dict(
                             fixedrange=True, 
@@ -309,16 +368,12 @@ with tab_zuschauer:
                     )
                     st.plotly_chart(fig_avg, use_container_width=True)
                     
-                    # --- EINZELNE SPIELE ---
-                    # Hier bereiten wir die Namen für die untere Leiste vor (Datum + Spieltag)
                     team_data['X_LABEL'] = team_data.apply(lambda x: f"{x['DATUM'].strftime('%d.%m.%Y')} (ST {str(x['SPIELTAG']).replace('.0', '')})", axis=1)
                     
-                    # Das Bild für jedes einzelne Spiel malen
                     fig_team = px.bar(team_data, x='X_LABEL', y='ZUSCHAUER', text='ZUSCHAUER', 
                                       color='SAISON', color_discrete_map=color_map, 
                                       title=f"Alle Heimspiele von {auswahl}")
                     
-                    # Das Aussehen verschönern (Zahlen oben, Schrift schräg)
                     fig_team.update_traces(textposition='outside')
                     fig_team.update_layout(
                         xaxis=dict(fixedrange=True),
@@ -331,4 +386,3 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
-
