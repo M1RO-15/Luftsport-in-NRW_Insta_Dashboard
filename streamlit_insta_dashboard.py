@@ -168,19 +168,6 @@ with tab_insta:
             
             fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
             
-            # Chart anzeigen mit deaktivierter Toolbar (kein Download-Button)
-            event = st.plotly_chart(
-                fig_win,
-                use_container_width=True,
-                on_select="rerun",      # Wichtig für deine Klick-Interaktion
-                config={
-                    'displayModeBar': False, # 🚫 Versteckt die Toolbar (Download, Zoom-Buttons etc.)
-                    'scrollZoom': False,     # 🚫 Deaktiviert Mausrad-Zoom
-                    'showTips': False,       # 🚫 Versteckt Plotly-Tipps
-                    'staticPlot': False      # Muss False bleiben, damit Klicks noch gehen!
-                }
-            )
-            
             # Event Listener
             event_win = st.plotly_chart(fig_win, use_container_width=True, on_select="rerun", selection_mode="points", key="chart_win")
             if handle_chart_selection(event_win):
@@ -432,6 +419,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
