@@ -196,7 +196,8 @@ with tab_insta:
                 },
                 yaxis_title=None,
                 clickmode='event+select',
-                dragmode=False          # 🔒 Verhindert das Ziehen/Maus-Selektieren
+                dragmode=False,          # 🔒 Verhindert das Ziehen/Maus-Selektieren
+                margin=dict(l=0, r=0, t=40, b=0)
             )
             fig_loss.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=-0)
             
@@ -432,6 +433,7 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
 
