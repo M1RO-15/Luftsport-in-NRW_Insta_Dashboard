@@ -150,8 +150,36 @@ with tab_insta:
                 text='Zuwachs',
                 custom_data=['CLUB_NAME'] 
             )
-            fig_win.update_layout(yaxis={'categoryorder':'total ascending'}, yaxis_title=None, clickmode='event+select')
+            
+            # Layout aktualisieren: Zoom sperren, aber Klickbarkeit erhalten
+            fig_win.update_layout(
+                yaxis={
+                    'categoryorder': 'total ascending',
+                    'fixedrange': True  # 🔒 Verhindert Zoom auf Y-Achse
+                },
+                xaxis={
+                    'fixedrange': True  # 🔒 Verhindert Zoom auf X-Achse
+                },
+                yaxis_title=None,
+                clickmode='event+select',
+                dragmode=False,         # 🔒 Verhindert das Ziehen/Maus-Selektieren
+                margin=dict(l=0, r=0, t=40, b=0) # Optional: Ränder optimieren
+            )
+            
             fig_win.update_traces(textposition='inside', insidetextanchor='start', textfont_color='black', textangle=0)
+            
+            # Chart anzeigen mit deaktivierter Toolbar (kein Download-Button)
+            event = st.plotly_chart(
+                fig_win,
+                use_container_width=True,
+                on_select="rerun",      # Wichtig für deine Klick-Interaktion
+                config={
+                    'displayModeBar': False, # 🚫 Versteckt die Toolbar (Download, Zoom-Buttons etc.)
+                    'scrollZoom': False,     # 🚫 Deaktiviert Mausrad-Zoom
+                    'showTips': False,       # 🚫 Versteckt Plotly-Tipps
+                    'staticPlot': False      # Muss False bleiben, damit Klicks noch gehen!
+                }
+            )
             
             # Event Listener
             event_win = st.plotly_chart(fig_win, use_container_width=True, on_select="rerun", selection_mode="points", key="chart_win")
@@ -404,5 +432,6 @@ with tab_zuschauer:
                     st.plotly_chart(fig_team, use_container_width=True)
     else: 
         st.error("Zuschauer-Daten konnten nicht geladen werden.")
+
 
 
