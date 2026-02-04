@@ -10,3 +10,6 @@ venv/
 
 # Betriebssystem
 .DS_Store
+
+# INTELLJ
+.idea/
