@@ -10,7 +10,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
 # ================= CONFIGURATION =================
-SHEET_ID = "1_Ni1ALTrq3qkgXxgBaG2TNjRBodCEaYewhhTPq0aWfU"
+SHEET_ID = "1mUEIohJzfZj_MtmYpn5E3URnw9ykfHErd5dfoZVnNSo"
 
 insta_urls = [
     "https://www.instagram.com/ybbalkan/", "https://www.instagram.com/tsvweilimdorf/",

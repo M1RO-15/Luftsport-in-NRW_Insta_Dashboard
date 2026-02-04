@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
 # --- Konfiguration ---
-INSTA_SHEET_ID = "1_Ni1ALTrq3qkgXxgBaG2TNjRBodCEaYewhhTPq0aWfU"
-ZUSCHAUER_SHEET_ID = "14puepYtteWGPD1Qv89gCpZijPm5Yrgr8glQnGBh3PXM"
+INSTA_SHEET_ID = "1mUEIohJzfZj_MtmYpn5E3URnw9ykfHErd5dfoZVnNSo"
+ZUSCHAUER_SHEET_ID = "1XlYwkPUbhi2STlLJvRAGzB_sp9-HKzoUv9GNMXjhm20"
 
 st.set_page_config(page_title="Futsal Statistik Dashboard", layout="wide")
 
